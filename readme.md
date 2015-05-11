@@ -1,4 +1,4 @@
 # ofxPlab #  
   
-src & libs para https://bitbucket.org/chparsons/ofxplab  
+common src & libs para https://bitbucket.org/chparsons/ofxplab  
   
