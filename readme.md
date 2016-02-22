@@ -1,4 +1,4 @@
-# ofxPlab #  
+# ofxMicromundos #  
   
-common src & libs para https://bitbucket.org/chparsons/ofxplab  
+common src & libs para https://github.com/micromundos/of-apps  
   
