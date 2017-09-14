@@ -26,6 +26,8 @@ namespace ofxMicromundos {
       virtual void render_grey_depth(float x = 0, float y = 0, float w = 640, float h = 480) = 0;
       virtual void render_rgb(float x = 0, float y = 0, float w = 640, float h = 480) = 0; 
 
+      virtual void enable_grey_depth(bool enabled) = 0;
+
       virtual bool inited() = 0;
 
       virtual bool depth_updated() = 0;

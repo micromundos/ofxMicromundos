@@ -22,11 +22,15 @@ namespace ofxMicromundos {
         vector <ofxKinectV2::KinectDeviceInfo> deviceList = kinect.getDeviceList();
         if (deviceList.empty())
           ofLogError("kinect device list is empty");
+
         kinect.open(deviceList[0].serial);
         kinect.setRegistration(true);
         kinect.minDistance = 100; 
         kinect.maxDistance = 2000; 
         _inited = false; 
+
+        kinect.setMapDepthPixels(false);
+        _grey_depth_enabled = false;
       };
 
       void update()
@@ -38,15 +42,17 @@ namespace ofxMicromundos {
 
         if (_kinect_updated)
         {
-          // undistorted depth
-          depth_pix = kinect.getRawDepthPixelsUndistorted();
+          depth_pix = kinect.getRawDepthPixels(); //getRawDepthPixelsUndistorted();
           ofxCv::flip(depth_pix, depth_pix, 1);
-
-          grey_pix = kinect.getDepthPixels();
-          ofxCv::flip(grey_pix, grey_pix, 1);
 
           rgb_pix = kinect.getRgbPixels();
           ofxCv::flip(rgb_pix, rgb_pix, 1);
+
+          if (_grey_depth_enabled)
+          {
+            grey_pix = kinect.getDepthPixels();
+            ofxCv::flip(grey_pix, grey_pix, 1);
+          } 
         }
       };
 
@@ -58,6 +64,8 @@ namespace ofxMicromundos {
 
       void render_grey_depth(float x, float y, float w, float h)
       {
+        if (!_grey_depth_enabled)
+          return;
         if (_kinect_updated)
           grey_tex.loadData(grey_pix);
         grey_tex.draw(x, y, w, h);
@@ -127,6 +135,12 @@ namespace ofxMicromundos {
        */
       //vector<ofVec3f>& point_cloud() {}; 
 
+      void enable_grey_depth(bool enabled) 
+      {
+        kinect.setMapDepthPixels(enabled);
+        _grey_depth_enabled = enabled;
+      };
+
       bool inited()
       {
         return _inited;
@@ -168,6 +182,7 @@ namespace ofxMicromundos {
 
       bool _kinect_updated;
       bool _inited;
+      bool _grey_depth_enabled;
       float* pcd;
 
       ofFloatPixels depth_pix;

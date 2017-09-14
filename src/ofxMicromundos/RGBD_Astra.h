@@ -137,6 +137,8 @@ namespace ofxMicromundos {
         //return astra.getPointCloud();
       //}; 
 
+      /*TODO*/ void enable_grey_depth(bool enabled) {};
+
       bool inited()
       {
         return _inited;
