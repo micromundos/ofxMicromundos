@@ -103,7 +103,7 @@ namespace ofxMicromundos {
       // astra 3d units: mm
       ofVec3f point(int x, int y)
       {
-        int _x = depth_pix.getWidth()-1 - x; //flipped
+        int _x = depth_width()-1 - x; //flip
         return astra.getWorldCoordinateAt(_x, y);
       };
 

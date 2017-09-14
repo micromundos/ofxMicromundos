@@ -38,16 +38,14 @@ namespace ofxMicromundos {
 
         if (_kinect_updated)
         {
-          depth_pix = kinect.getRawDepthPixels(); //copy
+          // undistorted depth
+          depth_pix = kinect.getRawDepthPixelsUndistorted();
           ofxCv::flip(depth_pix, depth_pix, 1);
 
-          depth_pix_undist = kinect.getRawDepthPixelsUndistorted(); //copy
-          ofxCv::flip(depth_pix_undist, depth_pix_undist, 1);
-
-          grey_pix = kinect.getDepthPixels(); //copy
+          grey_pix = kinect.getDepthPixels();
           ofxCv::flip(grey_pix, grey_pix, 1);
 
-          rgb_pix = kinect.getRgbPixels(); //copy
+          rgb_pix = kinect.getRgbPixels();
           ofxCv::flip(rgb_pix, rgb_pix, 1);
         }
       };
@@ -72,11 +70,6 @@ namespace ofxMicromundos {
         rgb_tex.draw(x, y, w, h);
       };
 
-      ofFloatPixels& depth_pixels_undistorted()
-      {
-        return depth_pix_undist;
-      };
-
       ofFloatPixels& depth_pixels()
       {
         return depth_pix;
@@ -95,7 +88,7 @@ namespace ofxMicromundos {
       // kinect2 3d units: mts
       ofVec3f point(int x, int y)
       {
-        int _x = x; //depth_pix.getWidth()-1 - x; //flipped
+        int _x = x; //depth_width()-1 - x; //flip
         return kinect.getWorldCoordinateAt(_x, y);
       };
 
@@ -151,12 +144,12 @@ namespace ofxMicromundos {
 
       int depth_width()
       {
-        return depth_pix.getWidth();
+        return depth_pixels().getWidth();
       };
 
       int depth_height()
       {
-        return depth_pix.getHeight();
+        return depth_pixels().getHeight();
       };
 
       int rgb_width()
@@ -178,7 +171,6 @@ namespace ofxMicromundos {
       float* pcd;
 
       ofFloatPixels depth_pix;
-      ofFloatPixels depth_pix_undist;
       ofPixels grey_pix;
       ofPixels rgb_pix;
 
