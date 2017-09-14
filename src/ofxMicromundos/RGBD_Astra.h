@@ -37,8 +37,10 @@ namespace ofxMicromundos {
 
         if (_depth_updated)
         {
-          ofxCv::flip(astra.getRawDepth(), depth_pixels, 1);
-          ofxCv::flip(astra.getDepthImage().getPixels(), grey_pixels, 1);
+          depth_pix = astra.getRawDepth(); //copy
+          ofxCv::flip(depth_pix, depth_pix, 1);
+          grey_pix = astra.getDepthImage().getPixels(); //copy
+          ofxCv::flip(grey_pix, grey_pix, 1);
         }
 
         grabber.update();
@@ -46,7 +48,8 @@ namespace ofxMicromundos {
 
         if (_rgb_updated)
         {
-          ofxCv::flip(grabber.getPixels(), rgb_pixels, 1);
+          rgb_pix = grabber.getPixels(); //copy
+          ofxCv::flip(rgb_pix, rgb_pix, 1);
         }
       };
 
@@ -56,39 +59,14 @@ namespace ofxMicromundos {
         //astra.close();
       }; 
 
-      ofFloatPixels& get_depth_pixels()
-      {
-        return depth_pixels;
-      };
-
-      ofPixels& get_grey_pixels()
-      {
-        return grey_pixels;
-      };
-
-      ofPixels& get_rgb_pixels()
-      {
-        return rgb_pixels;
-      };
-
-      ofVec3f get_point(int x, int y)
-      {
-        astra.getWorldCoordinateAt(x,y);
-      };
-
-      vector<ofVec3f>& get_point_cloud()
-      {
-        return point_cloud;
-      };
-
       void render_grey_depth(float x, float y, float w, float h)
       {
         astra.enableDepthImage(true);
         //astra.drawDepth(x, y, w, h);
         if (_depth_updated)
         {
-          grey_tex.loadData(grey_pixels);
-          //grey_tex.loadData(depth_pixels);
+          grey_tex.loadData(grey_pix);
+          //grey_tex.loadData(depth_pix);
         }
         grey_tex.draw(x, y, w, h);
       };
@@ -96,18 +74,66 @@ namespace ofxMicromundos {
       void render_rgb(float x, float y, float w, float h)
       {
         if (_rgb_updated)
-          rgb_tex.loadData(rgb_pixels);
+          rgb_tex.loadData(rgb_pix);
         rgb_tex.draw(x, y, w, h);
+      };
+
+      ofFloatPixels& depth_pixels()
+      {
+        return depth_pix;
+      };
+
+      ofPixels& grey_pixels()
+      {
+        return grey_pix;
+      };
+
+      ofPixels& rgb_pixels()
+      {
+        return rgb_pix;
+      };
+
+      // astra 3d units: mm
+      ofVec3f point(int x, int y)
+      {
+        int _x = depth_pix.getWidth()-1 - x; //flipped
+        return astra.getWorldCoordinateAt(_x, y);
+      };
+
+      //TODO RGBD_Astra flipped point cloud
+      //vector<ofVec3f>& point_cloud()
+      //{
+        //return astra.getPointCloud();
+      //}; 
+
+      bool depth_updated()
+      {
+        return _depth_updated;
       };
 
       bool rgb_updated()
       {
         return _rgb_updated;
+      }; 
+
+      int depth_width()
+      {
+        return depth_pix.getWidth();
       };
 
-      bool depth_updated()
+      int depth_height()
       {
-        return _depth_updated;
+        return depth_pix.getHeight();
+      };
+
+      int rgb_width()
+      {
+        return rgb_pix.getWidth();
+      };
+
+      int rgb_height()
+      {
+        return rgb_pix.getHeight();
       };
 
     private:
@@ -118,10 +144,9 @@ namespace ofxMicromundos {
       bool _rgb_updated;
       bool _depth_updated;
 
-      ofFloatPixels depth_pixels;
-      ofPixels grey_pixels;
-      ofPixels rgb_pixels;
-      vector<ofVec3f> point_cloud;
+      ofFloatPixels depth_pix;
+      ofPixels grey_pix;
+      ofPixels rgb_pix;
 
       ofTexture rgb_tex;
       ofTexture grey_tex;

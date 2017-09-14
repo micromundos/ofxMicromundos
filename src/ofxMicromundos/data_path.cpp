@@ -1,5 +1,3 @@
-#pragma once
-
 #include "ofxMicromundos/data_path.h"
 
 namespace ofxMicromundos { 
