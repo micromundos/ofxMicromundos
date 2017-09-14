@@ -20,10 +20,13 @@ namespace ofxMicromundos {
       virtual ofPixels& rgb_pixels() = 0; 
 
       virtual ofVec3f point(int x, int y) = 0;
+      virtual float* point_cloud_data() = 0;
       //virtual vector<ofVec3f>& point_cloud() = 0;
 
       virtual void render_grey_depth(float x = 0, float y = 0, float w = 640, float h = 480) = 0;
       virtual void render_rgb(float x = 0, float y = 0, float w = 640, float h = 480) = 0; 
+
+      virtual bool inited() = 0;
 
       virtual bool depth_updated() = 0;
       virtual bool rgb_updated() = 0; 

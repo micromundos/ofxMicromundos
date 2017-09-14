@@ -28,6 +28,8 @@ namespace ofxMicromundos {
         grabber.setDeviceID(0);
         grabber.setDesiredFrameRate(60);
         grabber.initGrabber(1920, 1080);
+
+        _inited = false; 
       };
 
       void update()
@@ -51,10 +53,15 @@ namespace ofxMicromundos {
           rgb_pix = grabber.getPixels(); //copy
           ofxCv::flip(rgb_pix, rgb_pix, 1);
         }
+
+        //TODO separate inited flags btw rgb & depth ?
+        if (!_inited)
+          _inited = _rgb_updated && _depth_updated; 
       };
 
       void dispose()
       {
+        delete[] pcd;
         grabber.close();
         //astra.close();
       }; 
@@ -100,11 +107,40 @@ namespace ofxMicromundos {
         return astra.getWorldCoordinateAt(_x, y);
       };
 
-      //TODO RGBD_Astra flipped point cloud
+      float* point_cloud_data()
+      {
+        //vector<ofVec3f>& pcl = point_cloud();
+        //float* pcd = &(pcl.data())[0].x;
+
+        int dw = depth_width();
+        int dh = depth_height();
+        if (pcd == nullptr)
+          pcd = new float[dw*dh*3];
+
+        int i = 0;
+        for (int y = 0; y < dh; y++)
+        //TODO flip pcd: for (int x = dw-1; x >= 0; x--)
+        for (int x = 0; x < dw; x++)
+        {
+          const ofVec3f& p = point(x, y);
+          pcd[i++] = p.x;
+          pcd[i++] = p.y;
+          pcd[i++] = p.z;
+        }
+
+        return pcd;
+      };
+
+      //TODO flip point cloud
       //vector<ofVec3f>& point_cloud()
       //{
         //return astra.getPointCloud();
       //}; 
+
+      bool inited()
+      {
+        return _inited;
+      };
 
       bool depth_updated()
       {
@@ -143,6 +179,8 @@ namespace ofxMicromundos {
 
       bool _rgb_updated;
       bool _depth_updated;
+      bool _inited;
+      float* pcd;
 
       ofFloatPixels depth_pix;
       ofPixels grey_pix;
