@@ -36,9 +36,7 @@ namespace ofxMicromundos {
       void update()
       {
         kinect.update();
-        _kinect_updated = kinect.isFrameNew();
-        if (!_inited)
-          _inited = _kinect_updated; 
+        _kinect_updated = kinect.isFrameNew();  
 
         if (_kinect_updated)
         {
@@ -54,11 +52,20 @@ namespace ofxMicromundos {
             ofxCv::flip(grey_pix, grey_pix, 1);
           } 
         }
+
+        if (!_inited)
+          _inited = _kinect_updated;
+
+        //if (_inited && rgb_to_depth_coord_map == nullptr)
+          //init_rgb_to_depth_coord_map();
+        //if (_kinect_updated)
+          //update_rgb_to_depth_coord_map();
       };
 
       void dispose()
       {
         delete[] pcd;
+        delete[] rgb_to_depth_coord_map;
         kinect.close();
       }; 
 
@@ -76,6 +83,72 @@ namespace ofxMicromundos {
         if (_kinect_updated)
           rgb_tex.loadData(rgb_pix);
         rgb_tex.draw(x, y, w, h);
+      };
+
+      void render_rgb_on_depth(float x, float y, float w, float h)
+      {
+        if (_kinect_updated)
+        {
+          ofFloatPixels rgb_on_depth_pix = kinect.getRgbOnDepthPixels(); 
+
+          int dw = depth_width();
+          int dh = depth_height();
+          int dlen = dw*dh;
+
+          if (!rgb_on_depth_pix3.isAllocated())
+            rgb_on_depth_pix3.allocate(dw, dh, 3);
+
+          //int j = 0;
+          //for (int i = 0; i < dlen; i++)
+          for (int dy = 0; dy < dh; dy++)
+          for (int dx = 0; dx < dw; dx++)
+          {
+            rgb_on_depth_pix3.setColor(dx, dy, kinect.getColorAt(dx, dy));
+            //int di = to_idx(dx, dy, dw);
+            //float rgb = rgb_on_depth_pix[di];
+            //const uint8_t *p = reinterpret_cast<uint8_t*>(&rgb);
+            //uint8_t b = p[0];
+            //uint8_t g = p[1];
+            //uint8_t r = p[2];
+            //rgb_on_depth_pix3.setColor(dx, dy, ofColor(r, g, b));
+            //rgb_on_depth_pix3[j++] = r;
+            //rgb_on_depth_pix3[j++] = g;
+            //rgb_on_depth_pix3[j++] = b;
+          }
+
+          ofxCv::flip(rgb_on_depth_pix3, rgb_on_depth_pix3, 1);
+
+          rgb_on_depth_tex.loadData(rgb_on_depth_pix3);
+        }
+        rgb_on_depth_tex.draw(x, y, w, h);
+      };
+
+      void render_depth_on_rgb(float x, float y, float w, float h)
+      {
+        //kinect.getDepthOnRgbPixels:
+        //if (_kinect_updated)
+        //{
+          //ofPixels depth_on_rgb_pix = kinect.getDepthOnRgbPixels();
+          //ofxCv::flip(depth_on_rgb_pix, depth_on_rgb_pix, 1);
+          //depth_on_rgb_tex.loadData(depth_on_rgb_pix);
+        //}
+        //depth_on_rgb_tex.draw(x, y, w, h);
+
+        //if (rgb_to_depth_coord_map == nullptr)
+          //return;
+        //if (_kinect_updated)
+        //{
+          //int cw = rgb_width();
+          //int ch = rgb_height(); 
+          //int clen = cw*ch; 
+          //for (int i = 0; i < clen; i++)
+          //{
+            //int di = rgb_to_depth_coord_map[i];
+            //depth_on_rgb_pix[i] = di > -1 ? grey_pix[di] : 0;
+          //}
+          //depth_on_rgb_tex.loadData(depth_on_rgb_pix);
+        //}
+        //depth_on_rgb_tex.draw(x, y, w, h);
       };
 
       ofFloatPixels& depth_pixels()
@@ -183,7 +256,15 @@ namespace ofxMicromundos {
       bool _kinect_updated;
       bool _inited;
       bool _grey_depth_enabled;
+
       float* pcd;
+
+      ofTexture rgb_on_depth_tex;
+      ofPixels rgb_on_depth_pix3;
+
+      int* rgb_to_depth_coord_map;
+      ofPixels depth_on_rgb_pix;
+      ofTexture depth_on_rgb_tex;
 
       ofFloatPixels depth_pix;
       ofPixels grey_pix;
@@ -191,6 +272,82 @@ namespace ofxMicromundos {
 
       ofTexture rgb_tex;
       ofTexture grey_tex;
+
+      void init_rgb_to_depth_coord_map()
+      {
+        if (!_inited)
+        {
+          ofLogError() << "RGBD_Kinect2 init_rgb_to_depth_coord_map: kinect not initialized";
+          return;
+        }
+
+        int cw = rgb_width();
+        int ch = rgb_height(); 
+        int clen = cw*ch; 
+
+        rgb_to_depth_coord_map = new int[clen]; 
+        depth_on_rgb_pix.allocate(cw, ch, 1);
+      };
+
+      void update_rgb_to_depth_coord_map()
+      {
+
+        int cw = rgb_width();
+        int ch = rgb_height();
+        int clen = cw*ch;
+
+        memset(rgb_to_depth_coord_map, -1, sizeof(int)*clen);
+
+        int dw = depth_width();
+        int dh = depth_height();
+        int dlen = dw*dh;
+
+        for (int dy = 0; dy < dh; dy++)
+        for (int dx = 0; dx < dw; dx++)
+        {
+          int depth_idx = to_idx(dx, dy, dw);
+          ofVec2f c = kinect.getColorCoordinateAt(dx,dy);
+          //c.x *= cw;
+          //c.y *= ch;
+          int rgb_idx = to_idx(int(c.x), int(c.y), cw);
+          ofLog() << dx << ", " << dy << " rgb: " << c << " rgb_idx: " << rgb_idx;
+          if (!valid(c.x, c.y))
+            continue;
+          //rgb_to_depth_coord_map[rgb_idx] = depth_idx;
+        }
+
+        //int* depth_to_rgb_map = kinect.getDepthToColorMap();
+        //for (int i = 0; i < dlen; i++)
+        //{
+          //int rgb_idx = depth_to_rgb_map[i];
+          //rgb_to_depth_coord_map[rgb_idx] = i;
+        //}
+
+        //ofLog() << "init rgb_to_depth_coord_map len " << clen;
+        //for (int i = 0; i < clen; i++)
+        //{
+          //int di = rgb_to_depth_coord_map[i];
+          //ofVec2f c = to_xy(i, cw, ch);
+          //ofLog() << "\t" << "rgb i: " << i << " coord: " << c << " = " <<  " depth i: " << di << " coord: " << to_xy(di, dw, dh);
+        //}
+      }; 
+
+      bool valid(int x, int y)
+      {
+        return !isnan(x) && !isnan(y);
+      };
+
+      ofVec2f to_xy(int i, int w, int h)
+      {
+        float x = ofClamp(i % w, 0, w-1);
+        float y = ofClamp(float(i-x)/w, 0, h-1);
+        return ofVec2f(x, y);
+      };
+
+      int to_idx(int x, int y, int w)
+      {
+        return x + y * w;
+      };
   };
 
 };
