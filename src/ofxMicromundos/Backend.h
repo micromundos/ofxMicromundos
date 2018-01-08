@@ -4,6 +4,7 @@
 #include "ofxMicromundos/RGB.h"
 #include "ofxMicromundos/Calib.h"
 #include "ofxMicromundos/Segmentation.h"
+#include "ofxMicromundos/Bloque.h"
 
 class Backend
 {
@@ -42,6 +43,8 @@ class Backend
       calib.transform(proj_pix, w, h);
       calib.transform(tags, proj_tags, w, h);
 
+      tags_to_bloques(proj_tags, proj_bloques);
+
       return true;
     };
 
@@ -78,6 +81,7 @@ class Backend
       proj_pix.clear();
       proj_tex.clear();
       proj_tags.clear();
+      proj_bloques.clear();
     };
 
     ofPixels& projected_pixels()
@@ -90,10 +94,11 @@ class Backend
       return proj_tex;
     };
 
-    vector<ChiliTag>& projected_tags()
+    map<int, Bloque>& projected_bloques()
     {
-      return proj_tags;
+      return proj_bloques;
     };
+
 
   private:
 
@@ -106,7 +111,10 @@ class Backend
 
     ofPixels proj_pix;
     ofTexture proj_tex;
+
     vector<ChiliTag> proj_tags;
+    map<int, Bloque> proj_bloques;
+ 
 
     void render_proj_pix(float w, float h)
     {
@@ -132,6 +140,50 @@ class Backend
         }
       }
       ofPopStyle();
+    };
+
+
+    void tags_to_bloques(vector<ChiliTag>& tags, map<int, Bloque>& bloques)
+    {
+      for (int i = 0; i < tags.size(); i++)
+      {
+        int id = tags[i].id;
+        if (bloques.find(id) != bloques.end())
+          update_bloque(tags[i], bloques[id]);
+        else 
+          bloques[id] = make_bloque(tags[i]);
+      }
+    };
+
+    Bloque make_bloque(ChiliTag& t)
+    {
+      Bloque b;
+      set_bloque(t, b);
+      b.loc_i = b.loc;
+      b.dir_i = b.dir;
+      b.angle_i = b.angle;
+      return b; 
+    };
+
+    void update_bloque(ChiliTag& t, Bloque& b)
+    {
+      interpolate_bloque(t, b);
+      set_bloque(t, b); 
+    };
+
+    void set_bloque(ChiliTag& t, Bloque& b)
+    {
+      b.id = t.id;
+      b.loc = t.center_n;
+      b.dir = t.dir;
+      b.angle = t.angle;
+    };
+
+    void interpolate_bloque(ChiliTag& t, Bloque& b)
+    {
+      b.loc_i += (t.center_n - b.loc_i) * 0.2;
+      b.dir_i += (t.dir - b.dir_i) * 0.2;
+      b.angle_i = ofLerpRadians(b.angle_i, t.angle, 0.05);
     };
 
 };
