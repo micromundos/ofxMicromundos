@@ -77,11 +77,10 @@ class Calib
       save();
     }; 
 
-    //TODO calib render tags to proj
     void render()
     { 
       render_calib_tags();
-      render_calib_pts();
+      //render_calib_pts();
     }; 
 
     void transform(ofPixels &src, ofPixels &dst, float w, float h)
