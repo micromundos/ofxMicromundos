@@ -18,9 +18,13 @@ class Calib
     bool init(float w, float h)
     {
       calib_tag_id = 0;
-      file_calib = "calib/H_rgb_proj.yml";
+      calib_file = "calib/H_rgb_proj.yml";
       UP = ofVec2f(0,1);
       H_ready = false;
+
+      calib_tags.resize(4);
+      for (int i = 0; i < calib_tags.size(); i++)
+        calib_tags[i].load("calib/"+ofToString(i+1)+".png");
 
       //float s = 50.;
       //float cx = w/2;
@@ -76,7 +80,8 @@ class Calib
     //TODO calib render tags to proj
     void render()
     { 
-      render_proj_pts();
+      render_calib_tags();
+      render_calib_pts();
     }; 
 
     void transform(ofPixels &src, ofPixels &dst, float w, float h)
@@ -121,7 +126,8 @@ class Calib
     cv::Mat H_cv;
     bool H_ready;
     ofVec2f UP;
-    string file_calib;
+    string calib_file;
+    vector<ofImage> calib_tags;
 
     vector<cv::Point2f> tags_pts;
     vector<cv::Point2f> proj_pts;
@@ -244,14 +250,24 @@ class Calib
       return t;
     };
 
-    void render_proj_pts()
+    void render_calib_tags()
+    {
+      float s = 60;
+      for (int i = 0; i < proj_pts.size(); i++)
+      {
+        cv::Point2f& p = proj_pts[i];
+        calib_tags[i].draw(p.x-s/2, p.y-s/2, s, s);
+      }
+    };
+
+    void render_calib_pts()
     {
       ofPushStyle();
       ofSetColor(ofColor::green);
       float s = 5;
       for (int i = 0; i < proj_pts.size(); i++)
       {
-        ofVec2f p = toOf(proj_pts[i]);
+        cv::Point2f& p = proj_pts[i];
         ofDrawLine( p.x, p.y-s, p.x, p.y+s );
         ofDrawLine( p.x-s, p.y, p.x+s, p.y );
       }
@@ -260,14 +276,14 @@ class Calib
 
     bool save()
     {
-      cv::FileStorage fs( ofToDataPath(file_calib, false), cv::FileStorage::WRITE );
+      cv::FileStorage fs( ofToDataPath(calib_file, false), cv::FileStorage::WRITE );
       fs << "homography" << H_cv;
       return true;
     };
 
     bool load()
     {
-      cv::FileStorage fs( ofToDataPath(file_calib, false), cv::FileStorage::READ ); 
+      cv::FileStorage fs( ofToDataPath(calib_file, false), cv::FileStorage::READ ); 
       if ( !fs.isOpened() )
         return false;
       fs["homography"] >> H_cv;
