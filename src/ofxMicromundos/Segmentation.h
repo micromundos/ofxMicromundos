@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ofxCv.h"
 #include "ofxChilitags.h"
 
 class Segmentation

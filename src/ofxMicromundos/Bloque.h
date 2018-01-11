@@ -1,7 +1,5 @@
 #pragma once
 
-#include "ofMain.h"
-
 struct Bloque
 {
     int id; 

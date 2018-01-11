@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ofxCv.h"
 #include "ofxChilitags.h"
 
 using namespace ofxCv;
@@ -72,6 +73,7 @@ class Calib
       save();
     }; 
 
+    //TODO calib render tags to proj
     void render()
     { 
       render_proj_pts();

@@ -41,8 +41,9 @@ class Backend
       //copy before transform
       proj_pix = seg.pixels();
       calib.transform(proj_pix, w, h);
-      calib.transform(tags, proj_tags, w, h);
+      proj_tex.loadData(proj_pix);
 
+      calib.transform(tags, proj_tags, w, h);
       tags_to_bloques(proj_tags, proj_bloques);
 
       return true;
@@ -60,17 +61,13 @@ class Backend
       render_proj_tags();
     };
 
-    void render_monitor(float w, float h)
+    void render_monitor(float x, float y, float w, float h)
     {
-      float hw = w/2;
-      float hh = h/2;
-
-      //top left
-      rgb.render(0, 0, hw, hh);
-      chilitags.render(0, 0, hw, hh);
-
-      //top right
-      seg.render(hw, 0, hw, hh);
+      //left
+      rgb.render(x, y, w, h);
+      chilitags.render(x, y, w, h);
+      //right
+      seg.render(x + w, y, w, h);
     };
 
     void dispose()
@@ -117,9 +114,7 @@ class Backend
  
 
     void render_proj_pix(float w, float h)
-    {
-      if (proj_pix.isAllocated())
-        proj_tex.loadData(proj_pix);
+    { 
       if (proj_tex.isAllocated())
         proj_tex.draw(0, 0, w, h);
     };
