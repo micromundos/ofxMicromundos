@@ -12,12 +12,11 @@ class RGB
       dispose();
     };
 
-    //TODO RGB init camera from settings file
-    void init()
+    void init(float w, float h, int device_id)
     {
-      vid.setDeviceID(1);
+      vid.setDeviceID(device_id);
       vid.setDesiredFrameRate(30);
-      vid.initGrabber(1920, 1080);
+      vid.initGrabber(w, h);
     }; 
 
     bool update()

@@ -16,15 +16,15 @@ class Backend
       dispose();
     };
 
-    void init(float w, float h)
+    void init(float proj_w, float proj_h, float rgb_w, float rgb_h, int rgb_device_id)
     {
-      rgb.init();
+      rgb.init(rgb_w, rgb_h, rgb_device_id);
       chilitags.init(); 
-      calib.init(w, h);
+      calib.init(proj_w, proj_h);
       seg.init();
     };
 
-    bool update(float w, float h)
+    bool update(float proj_w, float proj_h)
     {
       if (!rgb.update())
         return false;
@@ -36,14 +36,16 @@ class Backend
 
       calib_enabled = calib.enabled(tags);
       if (calib_enabled)
-        calib.find(tags, w, h);
+        calib.find(tags, proj_w, proj_h);
 
       //copy before transform
       proj_pix = seg.pixels();
-      calib.transform(proj_pix, w, h);
-      proj_tex.loadData(proj_pix);
+      if (proj_pix.isAllocated()) {
+        calib.transform(proj_pix, proj_w, proj_h);
+        proj_tex.loadData(proj_pix);
+      }
 
-      calib.transform(tags, proj_tags, w, h);
+      calib.transform(tags, proj_tags, proj_w, proj_h);
       tags_to_bloques(proj_tags, proj_bloques);
 
       return true;
