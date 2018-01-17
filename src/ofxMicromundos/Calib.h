@@ -87,15 +87,12 @@ class Calib
     {
       if (!H_ready)
         return;
-
       float sw = src.getWidth();
       float sh = src.getHeight(); 
-
-      ofPixels src_t; 
-      //ofxCv::imitate(src_t, src);
-      ofxCv::copy(src, src_t);
-      ofxCv::resize(src, src_t, w/sw, h/sh);
-      _transform(src_t, dst);
+      ofPixels src2;
+      ofxCv::resize(src, src2, w/sw, h/sh);
+      ofxCv::imitate(dst, src2);
+      _transform(src2, dst);
     }; 
 
     //in place

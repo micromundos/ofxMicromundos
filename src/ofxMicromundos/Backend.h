@@ -6,6 +6,7 @@
 #include "ofxMicromundos/Segmentation.h"
 #include "ofxMicromundos/Bloque.h"
 
+//TODO Backend with ofThread
 class Backend
 {
   public:
@@ -29,21 +30,19 @@ class Backend
       if (!rgb.update())
         return false;
 
-      ofPixels& rgb_pix = rgb.pixels();
+      ofPixels &rgb_pix = rgb.pixels();
+
       chilitags.update(rgb_pix);
       vector<ChiliTag>& tags = chilitags.tags();
+
       seg.update(rgb_pix, tags); 
 
       calib_enabled = calib.enabled(tags);
       if (calib_enabled)
         calib.find(tags, proj_w, proj_h);
 
-      //copy before transform
-      proj_pix = seg.pixels();
-      if (proj_pix.isAllocated()) {
-        calib.transform(proj_pix, proj_w, proj_h);
-        proj_tex.loadData(proj_pix);
-      }
+      calib.transform(seg.pixels(), proj_pix, proj_w, proj_h);
+      proj_tex.loadData(proj_pix);
 
       calib.transform(tags, proj_tags, proj_w, proj_h);
       tags_to_bloques(proj_tags, proj_bloques);
@@ -57,19 +56,39 @@ class Backend
         calib.render();
     };
 
-    void render_projected(float w, float h)
+    void render_projected_pixels(float w, float h)
+    { 
+      if (proj_tex.isAllocated())
+        proj_tex.draw(0, 0, w, h);
+    };
+
+    void render_projected_tags()
     {
-      render_proj_pix(w, h);
-      render_proj_tags();
+      ofPushStyle();
+      ofSetColor(ofColor::magenta);
+      ofSetLineWidth(4);
+      for (int i = 0; i < proj_tags.size(); i++)
+      {
+        vector<ofVec2f> &corners = proj_tags[i].corners;
+        ofVec2f p0, p1;
+        for (int j = 0; j < corners.size(); j++)
+        {
+          p0 = corners[j];
+          p1 = corners[ (j+1)%4 ]; 
+          ofDrawLine( p0.x, p0.y, p1.x, p1.y );
+        }
+      }
+      ofPopStyle();
     };
 
     void render_monitor(float x, float y, float w, float h)
     {
+      float _w = w/2;
       //left
-      rgb.render(x, y, w, h);
-      chilitags.render(x, y, w, h);
+      rgb.render(x, y, _w, h);
+      chilitags.render(x, y, _w, h);
       //right
-      seg.render(x + w, y, w, h);
+      seg.render(x + _w, y, _w, h);
     };
 
     void dispose()
@@ -112,32 +131,7 @@ class Backend
     ofTexture proj_tex;
 
     vector<ChiliTag> proj_tags;
-    map<int, Bloque> proj_bloques;
- 
-
-    void render_proj_pix(float w, float h)
-    { 
-      if (proj_tex.isAllocated())
-        proj_tex.draw(0, 0, w, h);
-    };
-
-    void render_proj_tags()
-    {
-      ofPushStyle();
-      ofSetColor(ofColor::magenta);
-      for (int i = 0; i < proj_tags.size(); i++)
-      {
-        vector<ofVec2f> &corners = proj_tags[i].corners;
-        ofVec2f p0, p1;
-        for (int j = 0; j < corners.size(); j++)
-        {
-          p0 = corners[j];
-          p1 = corners[ (j+1)%4 ]; 
-          ofDrawLine( p0.x, p0.y, p1.x, p1.y );
-        }
-      }
-      ofPopStyle();
-    };
+    map<int, Bloque> proj_bloques; 
 
 
     void tags_to_bloques(vector<ChiliTag>& tags, map<int, Bloque>& bloques)
