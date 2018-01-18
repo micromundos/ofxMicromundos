@@ -15,10 +15,14 @@ class Calib
       dispose();
     };
 
-    bool init(float w, float h)
+    bool init(
+        float w, float h, 
+        string calib_file, 
+        int calib_tag_id)
     {
-      calib_tag_id = 0;
-      calib_file = "calib/H_rgb_proj.yml";
+      this->calib_file = calib_file;
+      this->calib_tag_id = calib_tag_id;
+
       UP = ofVec2f(0,1);
       H_ready = false;
 

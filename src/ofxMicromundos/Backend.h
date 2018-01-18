@@ -17,25 +17,32 @@ class Backend
       dispose();
     };
 
-    void init(float proj_w, float proj_h, float rgb_w, float rgb_h, int rgb_device_id)
+    void init(
+        float proj_w, 
+        float proj_h, 
+        float cam_w, 
+        float cam_h, 
+        int cam_device_id, 
+        string calib_file, 
+        int calib_tag_id)
     {
-      rgb.init(rgb_w, rgb_h, rgb_device_id);
+      cam.init(cam_w, cam_h, cam_device_id);
+      calib.init(proj_w, proj_h, calib_file, calib_tag_id);
       chilitags.init(); 
-      calib.init(proj_w, proj_h);
       seg.init();
     };
 
     bool update(float proj_w, float proj_h)
     {
-      if (!rgb.update())
+      if (!cam.update())
         return false;
 
-      ofPixels &rgb_pix = rgb.pixels();
+      ofPixels &cam_pix = cam.pixels();
 
-      chilitags.update(rgb_pix);
+      chilitags.update(cam_pix);
       vector<ChiliTag>& tags = chilitags.tags();
 
-      seg.update(rgb_pix, tags); 
+      seg.update(cam_pix, tags); 
 
       calib_enabled = calib.enabled(tags);
       if (calib_enabled)
@@ -85,7 +92,7 @@ class Backend
     {
       float _w = w/2;
       //left
-      rgb.render(x, y, _w, h);
+      cam.render(x, y, _w, h);
       chilitags.render(x, y, _w, h);
       //right
       seg.render(x + _w, y, _w, h);
@@ -93,7 +100,7 @@ class Backend
 
     void dispose()
     {
-      rgb.dispose();
+      cam.dispose();
       calib.dispose();
       seg.dispose();
       proj_pix.clear();
@@ -122,7 +129,7 @@ class Backend
 
     float calib_enabled;
 
-    RGB rgb;
+    RGB cam;
     Calib calib;
     Segmentation seg;
     ofxChilitags chilitags;
