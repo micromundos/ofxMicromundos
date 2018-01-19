@@ -147,13 +147,14 @@ class Calib
       return tag.id == calib_tag_id;
     };
 
-    void _transform(const ofVec2f &src, ofVec2f &dst)
+    void _transform(ofVec2f &src, ofVec2f &dst)
     {
       vector<ofVec2f> srcPts;
       srcPts.push_back(src);
       vector<ofVec2f> dstPts;
       dstPts.push_back(dst);
       _transform(srcPts, dstPts);
+      dst.set(dstPts[0]);
     }; 
 
     void _transform(vector<ofVec2f> &src, vector<ofVec2f> &dst)
@@ -229,7 +230,8 @@ class Calib
       t.id = src_tag.id; 
 
       ofVec2f center_t;
-      _transform(src_tag.center_n * scale, center_t);
+      ofVec2f center_s = src_tag.center_n * scale;
+      _transform(center_s, center_t);
       t.center = center_t;
 
       t.center_n.set(t.center / scale);
@@ -241,7 +243,7 @@ class Calib
       t.corners = corners_t;
 
       for ( int i = 0; i < t.corners.size(); i++ )
-        t.corners_n.push_back(t.corners[i].x / scale);
+        t.corners_n.push_back(t.corners[i] / scale);
 
       t.dir.set(t.corners_n[0] - t.corners_n[1]);
       t.dir.normalize();

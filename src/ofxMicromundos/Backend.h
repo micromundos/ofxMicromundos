@@ -143,24 +143,39 @@ class Backend
 
     void tags_to_bloques(vector<ChiliTag>& tags, map<int, Bloque>& bloques)
     {
+      map<int,bool> _tags;
+
       for (int i = 0; i < tags.size(); i++)
       {
         int id = tags[i].id;
-        if (bloques.find(id) != bloques.end())
-          update_bloque(tags[i], bloques[id]);
+        _tags[id] = true;
+        if (bloques.find(id) == bloques.end())
+          make_bloque(tags[i], bloques);
         else 
-          bloques[id] = make_bloque(tags[i]);
+          update_bloque(tags[i], bloques[id]);
       }
+
+      vector<int> remove;
+      for (const auto& bloque : bloques)
+      {
+        int id = bloque.first;
+        if (_tags.find(id) == _tags.end())
+          remove.push_back(id);
+      }
+      for (const auto& id : remove)
+          bloques.erase(id);
     };
 
-    Bloque make_bloque(ChiliTag& t)
+    void make_bloque(ChiliTag& t, map<int, Bloque>& bloques)
     {
       Bloque b;
+
       set_bloque(t, b);
       b.loc_i = b.loc;
       b.dir_i = b.dir;
       b.angle_i = b.angle;
-      return b; 
+
+      bloques[b.id] = b;
     };
 
     void update_bloque(ChiliTag& t, Bloque& b)
@@ -173,6 +188,7 @@ class Backend
     {
       b.id = t.id;
       b.loc = t.center_n;
+      b.corners = t.corners_n;
       b.dir = t.dir;
       b.angle = t.angle;
     };
