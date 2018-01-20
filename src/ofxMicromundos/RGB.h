@@ -17,6 +17,7 @@ class RGB
       vid.setDeviceID(device_id);
       vid.setDesiredFrameRate(30);
       vid.initGrabber(w, h);
+      _updated = false;
     }; 
 
     bool update()
@@ -41,11 +42,6 @@ class RGB
       vid.close();
       //pix.clear();
       tex.clear();
-    };
-
-    bool updated()
-    {
-      return _updated;
     };
 
     ofPixels& pixels()

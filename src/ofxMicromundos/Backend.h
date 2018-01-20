@@ -2,6 +2,7 @@
 
 #include "ofxChilitags.h"
 #include "ofxMicromundos/RGB.h"
+#include "ofxMicromundos/TCP.h"
 #include "ofxMicromundos/Calib.h"
 #include "ofxMicromundos/Segmentation.h"
 #include "ofxMicromundos/Bloque.h"
@@ -25,12 +26,15 @@ class Backend
         int cam_device_id, 
         string calib_file, 
         int calib_tag_id,
-        float calib_tags_size)
+        float calib_tags_size,
+        bool tcp_enabled = false,
+        int tcp_port = 0)
     {
       this->proj_w = proj_w;
       this->proj_h = proj_h;
 
       calib_enabled = false;
+      _updated = false;
 
       calib.init(
           proj_w, proj_h, 
@@ -41,11 +45,16 @@ class Backend
       cam.init(cam_w, cam_h, cam_device_id);
       chilitags.init(); 
       seg.init();
+
+      if (tcp_enabled)
+        tcp.init(tcp_port);
     };
 
     bool update()
     {
-      if (!cam.update())
+      _updated = cam.update();
+
+      if (!_updated)
         return false;
 
       ofPixels &cam_pix = cam.pixels();
@@ -66,6 +75,15 @@ class Backend
       tags_to_bloques(proj_tags, proj_bloques);
 
       return true;
+    };
+
+    bool send()
+    {
+      if (!_updated) 
+        return false;
+      bool pix = tcp.send_pixels(proj_pix);
+      bool blo = tcp.send_bloques(proj_bloques);
+      return pix && blo;
     };
 
     bool render_calib(float w, float h)
@@ -110,6 +128,11 @@ class Backend
       seg.render(x + _w, y, _w, h);
     };
 
+    void render_tcp_info(float x, float y)
+    { 
+      tcp.render_info(x, y);
+    }; 
+
     void dispose()
     {
       cam.dispose();
@@ -141,8 +164,10 @@ class Backend
 
     float calib_enabled;
     float proj_w, proj_h;
+    bool _updated;
 
     RGB cam;
+    TCP tcp;
     Calib calib;
     Segmentation seg;
     ofxChilitags chilitags;
