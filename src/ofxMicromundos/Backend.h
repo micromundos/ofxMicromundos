@@ -26,6 +26,8 @@ class Backend
         string calib_file, 
         int calib_tag_id)
     {
+      this->proj_w = proj_w;
+      this->proj_h = proj_h;
       calib_enabled = false;
       cam.init(cam_w, cam_h, cam_device_id);
       calib.init(proj_w, proj_h, calib_file, calib_tag_id);
@@ -33,7 +35,7 @@ class Backend
       seg.init();
     };
 
-    bool update(float proj_w, float proj_h)
+    bool update()
     {
       if (!cam.update())
         return false;
@@ -58,10 +60,11 @@ class Backend
       return true;
     };
 
-    void render_calib(float w, float h)
+    bool render_calib(float w, float h)
     {
       if (calib_enabled)
         calib.render();
+      return calib_enabled;
     };
 
     void render_projected_pixels(float w, float h)
@@ -129,6 +132,7 @@ class Backend
   private:
 
     float calib_enabled;
+    float proj_w, proj_h;
 
     RGB cam;
     Calib calib;
