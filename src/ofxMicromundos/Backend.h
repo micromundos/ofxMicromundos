@@ -26,6 +26,7 @@ class Backend
         string calib_file, 
         int calib_tag_id)
     {
+      calib_enabled = false;
       cam.init(cam_w, cam_h, cam_device_id);
       calib.init(proj_w, proj_h, calib_file, calib_tag_id);
       chilitags.init(); 
