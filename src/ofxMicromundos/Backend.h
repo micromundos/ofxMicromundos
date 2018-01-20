@@ -24,13 +24,21 @@ class Backend
         float cam_h, 
         int cam_device_id, 
         string calib_file, 
-        int calib_tag_id)
+        int calib_tag_id,
+        float calib_tags_size)
     {
       this->proj_w = proj_w;
       this->proj_h = proj_h;
+
       calib_enabled = false;
+
+      calib.init(
+          proj_w, proj_h, 
+          calib_file, 
+          calib_tag_id,
+          calib_tags_size);
+
       cam.init(cam_w, cam_h, cam_device_id);
-      calib.init(proj_w, proj_h, calib_file, calib_tag_id);
       chilitags.init(); 
       seg.init();
     };
