@@ -4,6 +4,8 @@
 #include "ofxNetwork.h"
 #include "ofxMicromundos/Bloque.h"
 
+//TODO tcp server: split in 2 servers (message & binary), throttle binary 
+
 class TCP
 {
   public:

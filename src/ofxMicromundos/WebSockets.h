@@ -14,29 +14,38 @@ class WebSockets
       dispose();
     };
 
-    void init(int port)
+    void init(int port_bin, int port_msg)
     {
-      ofxLibwebsockets::ServerOptions options = ofxLibwebsockets::defaultServerOptions();
-      options.port = port;
-      connected = server.setup(options);
+      ofxLibwebsockets::ServerOptions bin = ofxLibwebsockets::defaultServerOptions();
+      bin.port = port_bin;
+
+      ofxLibwebsockets::ServerOptions msg = ofxLibwebsockets::defaultServerOptions();
+      msg.port = port_msg;
+
+      connected = server_bin.setup(bin) && server_msg.setup(msg);
     };
 
     void dispose()
     {
-      server.exit();
+      server_bin.exit();
+      server_msg.exit();
     };
 
     bool send(ofPixels& pix, map<int, Bloque>& bloques)
     {
       if (!connected)
         return false; 
+      server_msg.send(message(pix, bloques));
+      server_bin.sendBinary(pix.getData(), pix.getTotalBytes());
+      return true;
+    };
 
+    //pixels:size=307200#dim=640,480#chan=1_bloques:id=0#loc=0,0#dir=0,0#ang=0;id=1#loc=1,1#dir=1,1#ang=1
+    string message(ofPixels& pix, map<int, Bloque>& bloques)
+    {
       string msg = "";
 
-      //pixels:size=307200#dim=640,480#chan=1_bloques:id=0#loc=0,0#dir=0,0#ang=0;id=1#loc=1,1#dir=1,1#ang=1
-
       msg += "pixels:";
-      //msg += "size=" + ofToString(pix.size()) + "#"
       msg += "size=" + ofToString(pix.getTotalBytes()) + "#"
         + "dim=" 
           + ofToString(pix.getWidth()) + ","
@@ -61,12 +70,7 @@ class WebSockets
           + "ang=" + ofToString(b.angle);
       }
 
-      //TODO send message + pixels
-      //server.send(msg);
-      //server.sendBinary(pix.getData(), pix.size());
-      server.sendBinary(pix.getData(), pix.getTotalBytes());
-
-      return true;
+      return msg;
     };
 
     void render_info(float x, float y)
@@ -77,14 +81,15 @@ class WebSockets
         return;
       }
 
-      ofDrawBitmapStringHighlight("websockets server port: "+ofToString(server.getPort()), x, y, ofColor::green, ofColor::black);
+      float lh = 24; 
 
-      vector<ofxLibwebsockets::Connection*> conns = server.getConnections();
-      for (int i = 0; i < conns.size(); i++)
+      ofDrawBitmapStringHighlight("websockets server bin port: "+ofToString(server_bin.getPort()), x, y, ofColor::green, ofColor::black);
+      y += lh; 
+
+      vector<ofxLibwebsockets::Connection*> conns_bin = server_bin.getConnections();
+      for (int i = 0; i < conns_bin.size(); i++)
       {
-        ofxLibwebsockets::Connection* conn = conns[i];
-
-        y += 24 + 20*i;
+        ofxLibwebsockets::Connection* conn = conns_bin[i];
 
         string name = conn->getClientName();
         string ip = conn->getClientIP();
@@ -92,12 +97,33 @@ class WebSockets
         ofColor color = ofColor(255-i*30, 255-i*20, 100+i*40);
 
         ofDrawBitmapStringHighlight(info, x, y, color, ofColor::black);
+        y += lh;
+      }
+
+      y += lh; 
+
+      ofDrawBitmapStringHighlight("websockets server msg port: "+ofToString(server_msg.getPort()), x, y, ofColor::green, ofColor::black);
+      y += lh;
+
+      vector<ofxLibwebsockets::Connection*> conns_msg = server_msg.getConnections();
+      for (int i = 0; i < conns_msg.size(); i++)
+      {
+        ofxLibwebsockets::Connection* conn = conns_msg[i];
+
+        string name = conn->getClientName();
+        string ip = conn->getClientIP();
+        string info = "client "+name+" from "+ip;
+        ofColor color = ofColor(255-i*30, 255-i*20, 100+i*40);
+
+        ofDrawBitmapStringHighlight(info, x, y, color, ofColor::black);
+        y += lh;
       }
     };
 
   private:
 
-    ofxLibwebsockets::Server server;
+    ofxLibwebsockets::Server server_msg;
+    ofxLibwebsockets::Server server_bin;
     bool connected;
 };
 

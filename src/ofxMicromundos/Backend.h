@@ -27,8 +27,8 @@ class Backend
         string calib_file, 
         int calib_tag_id,
         float calib_tags_size,
-        bool network_enabled = false,
-        int network_port = 0)
+        int port_bin = 0,
+        int port_msg = 0)
     {
       this->proj_w = proj_w;
       this->proj_h = proj_h;
@@ -46,8 +46,8 @@ class Backend
       chilitags.init(); 
       seg.init();
 
-      if (network_enabled)
-        server.init(network_port);
+      if (port_bin != 0 && port_msg != 0)
+        server.init(port_bin, port_msg);
     };
 
     bool update()
@@ -142,6 +142,7 @@ class Backend
       proj_tex.clear();
       proj_tags.clear();
       proj_bloques.clear();
+      server.dispose();
     };
 
     ofPixels& projected_pixels()
