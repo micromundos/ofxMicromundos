@@ -40,14 +40,13 @@ class WebSockets
       return true;
     };
 
-    //pixels:size=307200#dim=640,480#chan=1_bloques:id=0#loc=0,0#dir=0,0#ang=0;id=1#loc=1,1#dir=1,1#ang=1
+    //pixels:dim=640,480#chan=1_bloques:id=0#loc=0,0#dir=0,0#ang=0;id=1#loc=1,1#dir=1,1#ang=1
     string message(ofPixels& pix, map<int, Bloque>& bloques)
     {
       string msg = "";
 
       msg += "pixels:";
-      msg += "size=" + ofToString(pix.getTotalBytes()) + "#"
-        + "dim=" 
+      msg += "dim=" 
           + ofToString(pix.getWidth()) + ","
           + ofToString(pix.getHeight()) + "#"
         + "chan=" 
@@ -93,7 +92,7 @@ class WebSockets
 
         string name = conn->getClientName();
         string ip = conn->getClientIP();
-        string info = "client "+name+" from "+ip;
+        string info = "client "+name+" from ip "+ip;
         ofColor color = ofColor(255-i*30, 255-i*20, 100+i*40);
 
         ofDrawBitmapStringHighlight(info, x, y, color, ofColor::black);
