@@ -85,8 +85,8 @@ class Calib
 
     void render()
     { 
-      render_calib_tags();
-      //render_calib_pts();
+      //render_calib_tags();
+      render_calib_pts();
     }; 
 
     void transform(ofPixels &src, ofPixels &dst, float w, float h)
@@ -270,7 +270,8 @@ class Calib
     {
       ofPushStyle();
       ofSetColor(ofColor::green);
-      float s = 5;
+      ofSetLineWidth(2);
+      float s = 20;
       for (int i = 0; i < proj_pts.size(); i++)
       {
         cv::Point2f& p = proj_pts[i];
