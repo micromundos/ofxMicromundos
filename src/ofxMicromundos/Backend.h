@@ -79,10 +79,10 @@ class Backend
       return true;
     };
 
-    bool send()
+    bool send(float resize = 1.0)
     {
       if (!_updated) return false;
-      return server.send(proj_pix_out, proj_bloques);
+      return server.send(proj_pix_out, proj_bloques, resize);
     };
 
     bool render_calib(float w, float h)

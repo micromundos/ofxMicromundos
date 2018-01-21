@@ -22,21 +22,33 @@ class WebSockets
       ofxLibwebsockets::ServerOptions msg = ofxLibwebsockets::defaultServerOptions();
       msg.port = port_msg;
 
-      connected = server_bin.setup(bin) && server_msg.setup(msg);
+      connected = server_bin.setup(bin) && server_msg.setup(msg); 
     };
 
     void dispose()
     {
+      out_pix.clear();
       server_bin.exit();
       server_msg.exit();
     };
 
-    bool send(ofPixels& pix, map<int, Bloque>& bloques)
+    bool send(ofPixels& pix, map<int, Bloque>& bloques, float resize)
     {
       if (!connected)
         return false; 
-      server_msg.send(message(pix, bloques));
-      server_bin.sendBinary(pix.getData(), pix.getTotalBytes());
+
+      ofPixels* opix;
+      if (resize != 1.0)
+      {
+        ofxCv::resize(pix, out_pix, resize, resize);
+        opix = &out_pix;
+      }
+      else
+        opix = &pix;
+
+      server_msg.send(message(*opix, bloques));
+      server_bin.sendBinary(opix->getData(), opix->getTotalBytes());
+
       return true;
     };
 
@@ -123,6 +135,7 @@ class WebSockets
 
     ofxLibwebsockets::Server server_msg;
     ofxLibwebsockets::Server server_bin;
+    ofPixels out_pix;
     bool connected;
 };
 
