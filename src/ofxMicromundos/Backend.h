@@ -2,7 +2,7 @@
 
 #include "ofxChilitags.h"
 #include "ofxMicromundos/RGB.h"
-#include "ofxMicromundos/TCP.h"
+#include "ofxMicromundos/WebSockets.h"
 #include "ofxMicromundos/Calib.h"
 #include "ofxMicromundos/Segmentation.h"
 #include "ofxMicromundos/Bloque.h"
@@ -27,8 +27,8 @@ class Backend
         string calib_file, 
         int calib_tag_id,
         float calib_tags_size,
-        bool tcp_enabled = false,
-        int tcp_port = 0)
+        bool network_enabled = false,
+        int network_port = 0)
     {
       this->proj_w = proj_w;
       this->proj_h = proj_h;
@@ -46,8 +46,8 @@ class Backend
       chilitags.init(); 
       seg.init();
 
-      if (tcp_enabled)
-        tcp.init(tcp_port);
+      if (network_enabled)
+        server.init(network_port);
     };
 
     bool update()
@@ -79,11 +79,8 @@ class Backend
 
     bool send()
     {
-      if (!_updated) 
-        return false;
-      bool pix = tcp.send_pixels(proj_pix);
-      bool blo = tcp.send_bloques(proj_bloques);
-      return pix && blo;
+      if (!_updated) return false;
+      return server.send(proj_pix, proj_bloques);
     };
 
     bool render_calib(float w, float h)
@@ -128,9 +125,9 @@ class Backend
       seg.render(x + _w, y, _w, h);
     };
 
-    void render_tcp_info(float x, float y)
+    void render_server_info(float x, float y)
     { 
-      tcp.render_info(x, y);
+      server.render_info(x, y);
     }; 
 
     void dispose()
@@ -167,7 +164,7 @@ class Backend
     bool _updated;
 
     RGB cam;
-    TCP tcp;
+    WebSockets server;
     Calib calib;
     Segmentation seg;
     ofxChilitags chilitags;

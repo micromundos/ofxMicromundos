@@ -1,34 +1,34 @@
 #pragma once
 
 #include "ofMain.h"
-#include "ofxNetwork.h"
+#include "ofxLibwebsockets.h"
 #include "ofxMicromundos/Bloque.h"
 
-class TCP
+class WebSockets
 {
   public:
 
-    TCP() {};
-    ~TCP() 
+    WebSockets() {};
+    ~WebSockets() 
     {
       dispose();
     };
 
     void init(int port)
     {
-      tcp.setup(port);
-      //tcp.setMessageDelimiter(",");
+      ofxLibwebsockets::ServerOptions options = ofxLibwebsockets::defaultServerOptions();
+      options.port = port;
+      connected = server.setup(options);
     };
 
     void dispose()
     {
-      tcp.disconnectAllClients();
-      tcp.close();
+      server.exit();
     };
 
     bool send(ofPixels& pix, map<int, Bloque>& bloques)
     {
-      if (!tcp.isConnected())
+      if (!connected)
         return false; 
 
       string msg = "";
@@ -60,34 +60,33 @@ class TCP
           + "ang=" + ofToString(b.angle);
       }
 
-      bool data_sent = tcp.sendToAll(msg);
+      //TODO send message + pixels
+      //server.send(msg);
+      server.sendBinary(pix.getData(), pix.size());
 
-      char* pix_data = reinterpret_cast<char*>(pix.getData()); 
-      bool pix_sent = tcp.sendRawBytesToAll(pix_data, pix.size());
-
-      return data_sent && pix_sent;
+      return true;
     };
 
     void render_info(float x, float y)
     {
-      if (!tcp.isConnected())
+      if (!connected)
       {
-        ofDrawBitmapStringHighlight("tcp server not connected", x, y, ofColor::red, ofColor::black);
+        ofDrawBitmapStringHighlight("websockets server not connected", x, y, ofColor::red, ofColor::black);
         return;
       }
 
-      ofDrawBitmapStringHighlight("tcp server port: "+ofToString(tcp.getPort()), x, y, ofColor::green, ofColor::black);
+      ofDrawBitmapStringHighlight("websockets server port: "+ofToString(server.getPort()), x, y, ofColor::green, ofColor::black);
 
-      for (unsigned int i = 0; i < (unsigned int)tcp.getLastID(); i++)
+      vector<ofxLibwebsockets::Connection*> conns = server.getConnections();
+      for (int i = 0; i < conns.size(); i++)
       {
-        if (!tcp.isClientConnected(i))
-          continue;
+        ofxLibwebsockets::Connection* conn = conns[i];
 
         y += 24 + 20*i;
 
-        string port = ofToString( tcp.getClientPort(i) );
-        string ip = tcp.getClientIP(i);
-        string info = "client "+ofToString(i)+" from "+ip+" on port: "+port;
+        string name = conn->getClientName();
+        string ip = conn->getClientIP();
+        string info = "client "+name+" from "+ip;
         ofColor color = ofColor(255-i*30, 255-i*20, 100+i*40);
 
         ofDrawBitmapStringHighlight(info, x, y, color, ofColor::black);
@@ -96,6 +95,7 @@ class TCP
 
   private:
 
-    ofxTCPServer tcp;
+    ofxLibwebsockets::Server server;
+    bool connected;
 };
 
