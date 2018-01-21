@@ -98,7 +98,7 @@ class Calib
       ofPixels src2;
       ofxCv::resize(src, src2, w/sw, h/sh);
       ofxCv::imitate(dst, src2);
-      _transform(src2, dst);
+      _transform_pix(src2, dst);
     }; 
 
     //in place
@@ -151,35 +151,35 @@ class Calib
       return tag.id == calib_tag_id;
     };
 
-    void _transform(ofVec2f &src, ofVec2f &dst)
+    void _transform_pts(ofVec2f &src, ofVec2f &dst)
     {
-      vector<ofVec2f> srcPts;
-      srcPts.push_back(src);
-      vector<ofVec2f> dstPts;
-      dstPts.push_back(dst);
-      _transform(srcPts, dstPts);
-      dst.set(dstPts[0]);
+      vector<ofVec2f> src_pts;
+      src_pts.push_back(src);
+      vector<ofVec2f> dst_pts;
+      dst_pts.push_back(dst);
+      _transform_pts(src_pts, dst_pts);
+      dst.set(dst_pts[0]);
     }; 
 
-    void _transform(vector<ofVec2f> &src, vector<ofVec2f> &dst)
+    void _transform_pts(vector<ofVec2f> &src, vector<ofVec2f> &dst)
     {
-      vector<cv::Point2f> srcPts = toCv(src);
-      vector<cv::Point2f> dstPts(src.size());
-      cv::perspectiveTransform(srcPts, dstPts, H_cv);
+      vector<cv::Point2f> src_pts = toCv(src);
+      vector<cv::Point2f> dst_pts(src.size());
+      cv::perspectiveTransform(src_pts, dst_pts, H_cv);
       dst.resize(src.size());
-      for(int i = 0; i < dstPts.size(); i++) 
+      for(int i = 0; i < dst_pts.size(); i++) 
       {
-        dst[i].x = dstPts[i].x;
-        dst[i].y = dstPts[i].y;
+        dst[i].x = dst_pts[i].x;
+        dst[i].y = dst_pts[i].y;
       }
     };
 
-    void _transform(vector<cv::Point2f> &src, vector<cv::Point2f> &dst)
+    void _transform_pts(vector<cv::Point2f> &src, vector<cv::Point2f> &dst)
     {
       cv::perspectiveTransform(src, dst, H_cv);
     };
 
-    void _transform(ofPixels& src, ofPixels& dst)
+    void _transform_pix(ofPixels& src, ofPixels& dst)
     {
       cv::Mat srcMat = toCv(src);
       cv::Mat dstMat = toCv(dst);
@@ -187,19 +187,19 @@ class Calib
       toOf(dstMat, dst);
     };
 
-    void _transform(ofVec2f &point)
+    void _transform_pts(ofVec2f &point)
     {
-      _transform(point, point);
+      _transform_pts(point, point);
     };
 
-    void _transform(vector<ofVec2f> &points)
+    void _transform_pts(vector<ofVec2f> &points)
     {
-      _transform(points, points);
+      _transform_pts(points, points);
     };
 
-    void _transform(ofPixels& pix)
+    void _transform_pix(ofPixels& pix)
     {
-      _transform(pix, pix);
+      _transform_pix(pix, pix);
     };
 
     ofVec2f tag_from_proj_coord(ofVec2f& proj_coord, ofVec2f& ctr, vector<ChiliTag>& tags)
@@ -235,7 +235,7 @@ class Calib
 
       ofVec2f center_t;
       ofVec2f center_s = src_tag.center_n * scale;
-      _transform(center_s, center_t);
+      _transform_pts(center_s, center_t);
       t.center = center_t;
 
       t.center_n.set(t.center / scale);
@@ -243,7 +243,7 @@ class Calib
       vector<ofVec2f> corners_t;
       for (int j = 0; j < src_tag.corners_n.size(); j++)
         corners_t.push_back(src_tag.corners_n[j] * scale);
-      _transform(corners_t);  
+      _transform_pts(corners_t);  
       t.corners = corners_t;
 
       for ( int i = 0; i < t.corners.size(); i++ )

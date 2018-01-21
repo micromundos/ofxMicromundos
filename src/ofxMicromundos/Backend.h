@@ -74,13 +74,15 @@ class Backend
       calib.transform(tags, proj_tags, proj_w, proj_h);
       tags_to_bloques(proj_tags, proj_bloques);
 
+      proj_pix_out.setFromPixels(proj_pix.getData(), proj_pix.getWidth(), proj_pix.getHeight(), proj_pix.getNumChannels());
+
       return true;
     };
 
     bool send()
     {
       if (!_updated) return false;
-      return server.send(proj_pix, proj_bloques);
+      return server.send(proj_pix_out, proj_bloques);
     };
 
     bool render_calib(float w, float h)
@@ -136,6 +138,7 @@ class Backend
       calib.dispose();
       seg.dispose();
       proj_pix.clear();
+      proj_pix_out.clear();
       proj_tex.clear();
       proj_tags.clear();
       proj_bloques.clear();
@@ -143,7 +146,7 @@ class Backend
 
     ofPixels& projected_pixels()
     {
-      return proj_pix;
+      return proj_pix_out;
     };
 
     ofTexture& projected_texture()
@@ -170,6 +173,7 @@ class Backend
     ofxChilitags chilitags;
 
     ofPixels proj_pix;
+    ofPixels proj_pix_out;
     ofTexture proj_tex;
 
     vector<ChiliTag> proj_tags;

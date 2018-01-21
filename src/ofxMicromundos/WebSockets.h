@@ -36,7 +36,8 @@ class WebSockets
       //pixels:size=307200#dim=640,480#chan=1_bloques:id=0#loc=0,0#dir=0,0#ang=0;id=1#loc=1,1#dir=1,1#ang=1
 
       msg += "pixels:";
-      msg += "size=" + ofToString(pix.size()) + "#"
+      //msg += "size=" + ofToString(pix.size()) + "#"
+      msg += "size=" + ofToString(pix.getTotalBytes()) + "#"
         + "dim=" 
           + ofToString(pix.getWidth()) + ","
           + ofToString(pix.getHeight()) + "#"
@@ -62,7 +63,8 @@ class WebSockets
 
       //TODO send message + pixels
       //server.send(msg);
-      server.sendBinary(pix.getData(), pix.size());
+      //server.sendBinary(pix.getData(), pix.size());
+      server.sendBinary(pix.getData(), pix.getTotalBytes());
 
       return true;
     };
