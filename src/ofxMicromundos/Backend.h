@@ -88,7 +88,10 @@ class Backend
     bool render_calib(float w, float h)
     {
       if (calib_enabled)
+      {
         calib.render();
+        render_projected_tags();
+      }
       return calib_enabled;
     };
 
@@ -101,8 +104,8 @@ class Backend
     void render_projected_tags()
     {
       ofPushStyle();
-      ofSetColor(ofColor::magenta);
-      ofSetLineWidth(4);
+      ofSetColor(ofColor::orange);
+      ofSetLineWidth(5);
       for (int i = 0; i < proj_tags.size(); i++)
       {
         vector<ofVec2f> &corners = proj_tags[i].corners;
