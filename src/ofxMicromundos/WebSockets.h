@@ -4,6 +4,9 @@
 #include "ofxLibwebsockets.h"
 #include "ofxMicromundos/Bloque.h"
 
+//serialization
+//pixels:dim=640,480#chan=1_bloques:id=0#loc=0,0#dir=0,0#ang=0;id=1#loc=1,1#dir=1,1#ang=1#radio=1
+
 class WebSockets
 {
   public:
@@ -46,14 +49,13 @@ class WebSockets
       else
         opix = &pix;
 
-      server_msg.send(message(*opix, bloques));
+      server_msg.send(serialize(*opix, bloques));
       server_bin.sendBinary(opix->getData(), opix->getTotalBytes());
 
       return true;
     };
 
-    //pixels:dim=640,480#chan=1_bloques:id=0#loc=0,0#dir=0,0#ang=0;id=1#loc=1,1#dir=1,1#ang=1
-    string message(ofPixels& pix, map<int, Bloque>& bloques)
+    string serialize(ofPixels& pix, map<int, Bloque>& bloques)
     {
       string msg = "";
 
@@ -69,7 +71,9 @@ class WebSockets
       for (const auto& bloque : bloques)
       {
         const Bloque& b = bloque.second;
+
         string sep = i++ > 0 ? ";" : "";
+
         msg += sep 
           + "id=" + ofToString(b.id) + "#" 
           + "loc=" 
@@ -78,7 +82,17 @@ class WebSockets
           + "dir=" 
             + ofToString(b.dir.x) + "," 
             + ofToString(b.dir.y) + "#" 
-          + "ang=" + ofToString(b.angle);
+          + "ang=" + ofToString(b.angle) + "#"
+          + "r=" + ofToString(b.radio);
+
+        //for (int j = 0; j < b.corners.size(); j++)
+        //{
+          //ofVec2f& corner = b.corners[j];
+          //string tail = j == b.corners.size()-1 ? "" : "#";
+          //msg += "corner@"+j+"="
+            //+ ofToString(corner.x) + "," 
+            //+ ofToString(corner.y) + tail;
+        //}
       }
 
       return msg;

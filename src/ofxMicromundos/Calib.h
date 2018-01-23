@@ -18,12 +18,10 @@ class Calib
     bool init(
         float w, float h, 
         string calib_file, 
-        int calib_tag_id,
-        float calib_tags_size)
+        int calib_tag_id)
     {
       this->calib_file = calib_file;
       this->calib_tag_id = calib_tag_id;
-      this->calib_tags_size = calib_tags_size;
 
       UP = ofVec2f(0,1);
       H_ready = false;
@@ -125,7 +123,6 @@ class Calib
   private:
 
     int calib_tag_id;
-    float calib_tags_size;
     string calib_file;
 
     cv::Mat H_cv;
@@ -258,7 +255,7 @@ class Calib
 
     void render_calib_tags()
     {
-      float s = calib_tags_size;
+      float s = 80;
       for (int i = 0; i < proj_pts.size(); i++)
       {
         cv::Point2f& p = proj_pts[i];

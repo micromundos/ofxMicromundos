@@ -26,7 +26,6 @@ class Backend
         int cam_device_id, 
         string calib_file, 
         int calib_tag_id,
-        float calib_tags_size,
         int port_bin = 0,
         int port_msg = 0)
     {
@@ -39,8 +38,7 @@ class Backend
       calib.init(
           proj_w, proj_h, 
           calib_file, 
-          calib_tag_id,
-          calib_tags_size);
+          calib_tag_id);
 
       cam.init(cam_w, cam_h, cam_device_id);
       chilitags.init(); 
@@ -186,12 +184,12 @@ class Backend
 
     void tags_to_bloques(vector<ChiliTag>& tags, map<int, Bloque>& bloques)
     {
-      map<int,bool> _tags;
+      map<int,bool> cur;
 
       for (int i = 0; i < tags.size(); i++)
       {
         int id = tags[i].id;
-        _tags[id] = true;
+        cur[id] = true;
         if (bloques.find(id) == bloques.end())
           make_bloque(tags[i], bloques);
         else 
@@ -202,7 +200,7 @@ class Backend
       for (const auto& bloque : bloques)
       {
         int id = bloque.first;
-        if (_tags.find(id) == _tags.end())
+        if (cur.find(id) == cur.end())
           remove.push_back(id);
       }
       for (const auto& id : remove)
@@ -214,6 +212,7 @@ class Backend
       Bloque b;
 
       set_bloque(t, b);
+
       b.loc_i = b.loc;
       b.dir_i = b.dir;
       b.angle_i = b.angle;
@@ -231,9 +230,12 @@ class Backend
     {
       b.id = t.id;
       b.loc = t.center_n;
-      b.corners = t.corners_n;
       b.dir = t.dir;
       b.angle = t.angle;
+
+      ofVec2f corner(t.corners_n[0].x, t.corners_n[0].y);
+      b.radio = b.loc.distance(corner);
+      //b.corners = t.corners_n;
     };
 
     void interpolate_bloque(ChiliTag& t, Bloque& b)
@@ -242,5 +244,5 @@ class Backend
       b.dir_i += (t.dir - b.dir_i) * 0.2;
       b.angle_i = ofLerpRadians(b.angle_i, t.angle, 0.05);
     };
-
 };
+
