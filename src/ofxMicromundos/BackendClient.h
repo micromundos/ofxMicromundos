@@ -37,11 +37,6 @@ class BackendClient
       bin.render(0, 0, w, h);
     };
 
-    void render_projected_tags()
-    {
-      //TODO BackendClient->render_projected_tags
-    };
-
     void print_info(float x, float y)
     {
       float lh = 24;
