@@ -22,6 +22,7 @@ class MsgClient
       _pix_w = 0;
       _pix_h = 0;
       _pix_chan = 0;
+      _calib_enabled = false;
     };
 
     void dispose()
@@ -39,7 +40,7 @@ class MsgClient
       return true;
     };
 
-    void print_info(float x, float y)
+    void print_connection(float x, float y)
     {
       ofxLibwebsockets::Connection* conn = client.getConnection();
       string name = conn->getClientName();
@@ -49,15 +50,18 @@ class MsgClient
       ofDrawBitmapStringHighlight(info, x, y+lh/2);
     };
 
-    void print_pix_data(float x, float y)
+    void print_metadata(float x, float y)
     {
-      stringstream info;
-      info << "msg pix" 
-        << " w " << _pix_w
-        << " h " << _pix_h 
-        << " chan " << _pix_chan;
+      stringstream msg;
+      msg << "metadata= "
+        << " pix:" 
+          << " w " << _pix_w
+          << " h " << _pix_h 
+          << " chan " << _pix_chan
+        << " calib:" 
+          << " enabled " << _calib_enabled;
       float lh = 24;
-      ofDrawBitmapStringHighlight(info.str(), x, y+lh/2);
+      ofDrawBitmapStringHighlight(msg.str(), x, y+lh/2);
     };
 
     void print_bloques(float x, float y)
@@ -113,6 +117,7 @@ class MsgClient
     int pix_width() { return _pix_w; };
     int pix_height() { return _pix_h; };
     int pix_chan() { return _pix_chan; };
+    bool calib_enabled() { return _calib_enabled; };
 
     bool pix_ready()
     {
@@ -131,6 +136,7 @@ class MsgClient
 
     string message;
     int _pix_w, _pix_h, _pix_chan;
+    bool _calib_enabled;
     map<int, Bloque> _bloques;
 
     void parse()
@@ -141,19 +147,32 @@ class MsgClient
         parse_pix_data(data[0]);
 
       if (data.size() > 1)
-        parse_bloques(ofSplitString(ofSplitString(data[1], ":")[1], ";"), _bloques);
+        parse_calib_data(data[1]);
+
+      if (data.size() > 2)
+        parse_bloques(ofSplitString(ofSplitString(data[2], ":")[1], ";"), _bloques);
     };
 
     void parse_pix_data(string pix_data_str)
     {
-      vector<string> p0 = ofSplitString(pix_data_str, ":");
-      if (p0.size() > 1)
+      vector<string> pd = ofSplitString(pix_data_str, ":");
+      if (pd.size() > 1)
       {
-        vector<string> pix_data = ofSplitString(p0[1], "#");
+        vector<string> pix_data = ofSplitString(pd[1], "#");
         ofVec2f dim = d2vec(pix_data[0]);
         _pix_w = dim.x;
         _pix_h = dim.y;
         _pix_chan = d2i(pix_data[1]);
+      }
+    };
+
+    void parse_calib_data(string calib_str)
+    {
+      vector<string> cd = ofSplitString(calib_str, ":");
+      if (cd.size() > 1)
+      {
+        vector<string> cdata = ofSplitString(cd[1], "#");
+        _calib_enabled = bool(d2i(cdata[0]));
       }
     };
 
@@ -197,7 +216,7 @@ class MsgClient
 
     void set_bloque(int id, vector<string>& bdata, Bloque& b)
     {
-      //TODO MsgClient: better de-serialization
+      //TODO MsgClient: better deserialization
       //int id = d2i(bdata[0]);
       ofVec2f loc = d2vec(bdata[1]);
       ofVec2f dir = d2vec(bdata[2]);

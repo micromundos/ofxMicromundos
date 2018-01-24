@@ -17,6 +17,8 @@ namespace ofxMicromundos {
   string getDataPath(string path);
   void setDataPathRoot();
 
-  ofVec2f projector_position(cv::FileStorage config);
+  ofVec2f projector_position(cv::FileStorage& config);
   cv::FileStorage load_config(string filename);
+
+  bool projector(bool proj, cv::FileStorage& config);
 };

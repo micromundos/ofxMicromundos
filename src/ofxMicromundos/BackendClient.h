@@ -37,16 +37,16 @@ class BackendClient
       bin.render(0, 0, w, h);
     };
 
-    void print_info(float x, float y)
+    void print_connection(float x, float y)
     {
       float lh = 24;
-      bin.print_info(x, y);
-      msg.print_info(x, y + lh);
+      bin.print_connection(x, y);
+      msg.print_connection(x, y + lh);
     };
 
-    void print_pix_data(float x, float y)
+    void print_metadata(float x, float y)
     {
-      msg.print_pix_data(x, y);
+      msg.print_metadata(x, y);
     };
 
     void print_bloques(float x, float y)
@@ -67,6 +67,11 @@ class BackendClient
     map<int, Bloque>& projected_bloques()
     {
       return msg.bloques();
+    };
+
+    bool calib_enabled()
+    {
+      return msg.calib_enabled();
     };
 
   private:

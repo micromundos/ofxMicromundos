@@ -35,7 +35,7 @@ class WebSockets
       server_msg.exit();
     };
 
-    bool send(ofPixels& pix, map<int, Bloque>& bloques, float resize)
+    bool send(ofPixels& pix, map<int, Bloque>& bloques, bool calib_enabled, float resize)
     {
       if (!connected)
         return false; 
@@ -49,13 +49,13 @@ class WebSockets
       else
         opix = &pix;
 
-      server_msg.send(serialize(*opix, bloques));
+      server_msg.send(serialize(*opix, bloques, calib_enabled));
       server_bin.sendBinary(opix->getData(), opix->getTotalBytes());
 
       return true;
     };
 
-    string serialize(ofPixels& pix, map<int, Bloque>& bloques)
+    string serialize(ofPixels& pix, map<int, Bloque>& bloques, bool calib_enabled)
     {
       string msg = "";
 
@@ -66,7 +66,10 @@ class WebSockets
         + "chan=" 
           + ofToString(pix.getNumChannels());
 
+      msg += "_calib:enabled=" + ofToString(calib_enabled);
+
       msg += "_bloques:";
+
       int i = 0;
       for (const auto& bloque : bloques)
       {

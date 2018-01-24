@@ -26,7 +26,7 @@ namespace ofxMicromundos {
     ofSetDataPathRoot(getDataPath("../../data"));
   };
 
-  ofVec2f projector_position(cv::FileStorage config)
+  ofVec2f projector_position(cv::FileStorage& config)
   {
     string pos = config["projector"]["position"];
     float x0;
@@ -56,6 +56,26 @@ namespace ofxMicromundos {
       ofExit();
     }
     return cfg;
+  };
+
+  bool projector(bool proj, cv::FileStorage& config)
+  {
+    if (proj)
+    {
+      ofSetFullscreen(string(config["projector"]["fullscreen"]).compare("true") == 0);
+      ofSetWindowShape(config["projector"]["width"], config["projector"]["height"]);
+      ofVec2f proj = projector_position(config);
+      ofSetWindowPosition(proj.x, proj.y);
+    }
+
+    else
+    {
+      ofSetFullscreen(false);
+      ofSetWindowShape(10, 10);
+      ofSetWindowPosition(0, 0);
+    };
+
+    return proj;
   };
 
 };

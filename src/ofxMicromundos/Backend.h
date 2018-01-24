@@ -32,7 +32,7 @@ class Backend
       this->proj_w = proj_w;
       this->proj_h = proj_h;
 
-      calib_enabled = false;
+      _calib_enabled = false;
       _updated = false;
 
       calib.init(
@@ -62,8 +62,8 @@ class Backend
 
       seg.update(cam_pix, tags); 
 
-      calib_enabled = calib.enabled(tags);
-      if (calib_enabled)
+      _calib_enabled = calib.enabled(tags);
+      if (_calib_enabled)
         calib.find(tags, proj_w, proj_h);
 
       calib.transform(seg.pixels(), proj_pix, proj_w, proj_h);
@@ -80,17 +80,21 @@ class Backend
     bool send(float resize = 1.0)
     {
       if (!_updated) return false;
-      return server.send(proj_pix_out, proj_bloques, resize);
+      return server.send(
+          proj_pix_out, 
+          proj_bloques, 
+          _calib_enabled, 
+          resize);
     };
 
     bool render_calib(float w, float h)
     {
-      if (calib_enabled)
+      if (_calib_enabled)
       {
         calib.render();
         render_projected_tags();
       }
-      return calib_enabled;
+      return _calib_enabled;
     };
 
     void render_projected_pixels(float w, float h)
@@ -161,11 +165,15 @@ class Backend
       return proj_bloques;
     };
 
+    bool calib_enabled()
+    {
+      return _calib_enabled;
+    };
 
   private:
 
-    float calib_enabled;
     float proj_w, proj_h;
+    float _calib_enabled;
     bool _updated;
 
     RGB cam;
