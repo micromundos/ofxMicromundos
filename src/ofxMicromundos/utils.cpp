@@ -62,6 +62,7 @@ namespace ofxMicromundos {
   {
     if (proj)
     {
+      ofBackground(0); 
       ofSetFullscreen(string(config["projector"]["fullscreen"]).compare("true") == 0);
       ofSetWindowShape(config["projector"]["width"], config["projector"]["height"]);
       ofVec2f proj = projector_position(config);
@@ -71,8 +72,8 @@ namespace ofxMicromundos {
     else
     {
       ofSetFullscreen(false);
-      ofSetWindowShape(10, 10);
-      ofSetWindowPosition(0, 0);
+      ofSetWindowShape(1,1);
+      //ofSetWindowPosition(0,0);
     };
 
     return proj;
