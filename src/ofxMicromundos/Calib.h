@@ -18,10 +18,11 @@ class Calib
     bool init(
         float w, float h, 
         string calib_file, 
-        int calib_tag_id)
+        int calib_tag_id,
+        cv::FileNode _proj_pts)
     {
       this->calib_file = calib_file;
-      this->calib_tag_id = calib_tag_id;
+      this->calib_tag_id = calib_tag_id; 
 
       UP = ofVec2f(0,1);
       H_ready = false;
@@ -34,10 +35,13 @@ class Calib
       //float cx = w/2;
       //float cy = h/2;
 
-      proj_pts.push_back(cv::Point2f( w*1./3., h*1./3. ));
-      proj_pts.push_back(cv::Point2f( w*2./3., h*1./3. ));
-      proj_pts.push_back(cv::Point2f( w*2./3., h*2./3. ));
-      proj_pts.push_back(cv::Point2f( w*1./3., h*2./3. ));
+      vector<vector<float>> pp;
+      _proj_pts >> pp;
+      proj_pts.push_back(cv::Point2f( w*pp[0][0], h*pp[0][1] ));
+      proj_pts.push_back(cv::Point2f( w*pp[1][0], h*pp[1][1] ));
+      //XXX clockwise
+      proj_pts.push_back(cv::Point2f( w*pp[3][0], h*pp[3][1] ));
+      proj_pts.push_back(cv::Point2f( w*pp[2][0], h*pp[2][1] ));
 
       proj_coords.push_back(ofVec2f( -1.,-1. ));
       proj_coords.push_back(ofVec2f(  1.,-1. ));

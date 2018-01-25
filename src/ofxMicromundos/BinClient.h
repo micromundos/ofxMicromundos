@@ -55,6 +55,8 @@ class BinClient
     void print_connection(float x, float y)
     {
       ofxLibwebsockets::Connection* conn = client.getConnection();
+      if (conn == nullptr)
+        return;
       string name = conn->getClientName();
       string ip = conn->getClientIP();
       string info = "bin connected: name="+name + " / ip=" + ip; 
@@ -97,7 +99,6 @@ class BinClient
     bool received, locked;
 
     char* pix_data;
-    size_t pix_size;
     ofPixels pix;
     ofTexture tex;
 

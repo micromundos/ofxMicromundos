@@ -43,6 +43,8 @@ class MsgClient
     void print_connection(float x, float y)
     {
       ofxLibwebsockets::Connection* conn = client.getConnection();
+      if (conn == nullptr)
+        return;
       string name = conn->getClientName();
       string ip = conn->getClientIP();
       string info = "msg connected: name="+name + " / ip=" + ip; 

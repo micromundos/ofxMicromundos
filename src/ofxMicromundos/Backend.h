@@ -26,6 +26,7 @@ class Backend
         int cam_device_id, 
         string calib_file, 
         int calib_tag_id,
+        cv::FileNode proj_pts,
         int port_bin = 0,
         int port_msg = 0)
     {
@@ -38,7 +39,8 @@ class Backend
       calib.init(
           proj_w, proj_h, 
           calib_file, 
-          calib_tag_id);
+          calib_tag_id,
+          proj_pts);
 
       cam.init(cam_w, cam_h, cam_device_id);
       chilitags.init(); 
