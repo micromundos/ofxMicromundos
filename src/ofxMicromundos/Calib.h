@@ -17,11 +17,13 @@ class Calib
 
     bool init(
         float w, float h, 
-        string calib_file, 
+        string H_cam_proj_file, 
+        string calib_cam_file, 
         int calib_tag_id,
         cv::FileNode _proj_pts)
     {
-      this->calib_file = calib_file;
+      this->H_cam_proj_file = H_cam_proj_file;
+      this->calib_cam_file = calib_cam_file;
       this->calib_tag_id = calib_tag_id; 
 
       UP = ofVec2f(0,1);
@@ -48,7 +50,8 @@ class Calib
       proj_coords.push_back(ofVec2f(  1., 1. ));
       proj_coords.push_back(ofVec2f( -1., 1. ));
 
-      load();
+      load_H();
+      load_cam_calib();
     };
 
     bool enabled(vector<ChiliTag>& tags)
@@ -59,7 +62,7 @@ class Calib
       return false;
     };
 
-    void find(vector<ChiliTag>& _tags, float w, float h)
+    void calibrate(vector<ChiliTag>& _tags, float w, float h)
     {
       vector<ChiliTag> tags = filter_calib_tag(_tags);
 
@@ -82,7 +85,7 @@ class Calib
           cv::Mat(proj_pts));
       H_ready = true; 
 
-      save();
+      save_H();
     }; 
 
     void render()
@@ -91,7 +94,9 @@ class Calib
       render_calib_pts();
     }; 
 
-    void transform(ofPixels &src, ofPixels &dst, float w, float h)
+    void transform(
+        ofPixels &src, ofPixels &dst, 
+        float w, float h)
     {
       if (!H_ready)
         return;
@@ -100,7 +105,7 @@ class Calib
       ofPixels src2;
       ofxCv::resize(src, src2, w/sw, h/sh);
       ofxCv::imitate(dst, src2);
-      _transform_pix(src2, dst);
+      transform_pix(src2, dst);
     }; 
 
     //in place
@@ -121,16 +126,29 @@ class Calib
         dst_tags.push_back(transform_tag(src_tags[i], scale)); 
     };
 
+    void undistort(ofPixels& pix)
+    {
+      if (!cam_calib.isReady())
+        return;
+      cv::Mat mat = toCv(pix);
+      cam_calib.undistort(mat);
+      toOf(mat, pix);
+    };
+
     void dispose()
     {}; 
 
   private:
 
     int calib_tag_id;
-    string calib_file;
+    string H_cam_proj_file;
+    string calib_cam_file;
 
     cv::Mat H_cv;
     bool H_ready;
+
+    ofxCv::Calibration cam_calib;
+
     ofVec2f UP;
     vector<ofImage> calib_tags;
 
@@ -152,17 +170,17 @@ class Calib
       return tag.id == calib_tag_id;
     };
 
-    void _transform_pts(ofVec2f &src, ofVec2f &dst)
+    void transform_pts(ofVec2f &src, ofVec2f &dst)
     {
       vector<ofVec2f> src_pts;
       src_pts.push_back(src);
       vector<ofVec2f> dst_pts;
       dst_pts.push_back(dst);
-      _transform_pts(src_pts, dst_pts);
+      transform_pts(src_pts, dst_pts);
       dst.set(dst_pts[0]);
     }; 
 
-    void _transform_pts(vector<ofVec2f> &src, vector<ofVec2f> &dst)
+    void transform_pts(vector<ofVec2f> &src, vector<ofVec2f> &dst)
     {
       vector<cv::Point2f> src_pts = toCv(src);
       vector<cv::Point2f> dst_pts(src.size());
@@ -175,12 +193,22 @@ class Calib
       }
     };
 
-    void _transform_pts(vector<cv::Point2f> &src, vector<cv::Point2f> &dst)
+    void transform_pts(vector<cv::Point2f> &src, vector<cv::Point2f> &dst)
     {
       cv::perspectiveTransform(src, dst, H_cv);
+    }; 
+
+    void transform_pts(ofVec2f &point)
+    {
+      transform_pts(point, point);
     };
 
-    void _transform_pix(ofPixels& src, ofPixels& dst)
+    void transform_pts(vector<ofVec2f> &points)
+    {
+      transform_pts(points, points);
+    };
+
+    void transform_pix(ofPixels& src, ofPixels& dst)
     {
       cv::Mat srcMat = toCv(src);
       cv::Mat dstMat = toCv(dst);
@@ -188,19 +216,51 @@ class Calib
       toOf(dstMat, dst);
     };
 
-    void _transform_pts(ofVec2f &point)
+    void transform_pix(ofPixels& pix)
     {
-      _transform_pts(point, point);
+      transform_pix(pix, pix);
     };
 
-    void _transform_pts(vector<ofVec2f> &points)
+    ChiliTag transform_tag(ChiliTag &src_tag, ofVec2f &scale)
     {
-      _transform_pts(points, points);
+      ChiliTag t;
+      t.id = src_tag.id; 
+
+      ofVec2f center_t;
+      ofVec2f center_s = src_tag.center_n * scale;
+      transform_pts(center_s, center_t);
+      t.center = center_t;
+
+      t.center_n.set(t.center / scale);
+
+      vector<ofVec2f> corners_t;
+      for (int j = 0; j < src_tag.corners_n.size(); j++)
+        corners_t.push_back(src_tag.corners_n[j] * scale);
+      transform_pts(corners_t);  
+      t.corners = corners_t;
+
+      for ( int i = 0; i < t.corners.size(); i++ )
+        t.corners_n.push_back(t.corners[i] / scale);
+
+      t.dir.set(t.corners_n[0] - t.corners_n[1]);
+      t.dir.normalize();
+      t.angle = t.dir.angleRad(UP) + PI; 
+
+      return t;
+    }; 
+
+    void undistort(vector<ofVec2f>& src, vector<ofVec2f>& dst)
+    {
+      if (!cam_calib.isReady())
+        return;
+      cam_calib.undistort(src, dst);
     };
 
-    void _transform_pix(ofPixels& pix)
+    ofVec2f undistort(ofVec2f &src)
     {
-      _transform_pix(pix, pix);
+      if (!cam_calib.isReady())
+        return src;
+      return cam_calib.undistort(src);
     };
 
     ofVec2f tag_from_proj_coord(ofVec2f& proj_coord, ofVec2f& ctr, vector<ChiliTag>& tags)
@@ -227,35 +287,7 @@ class Calib
     {
       ofVec2f s = a * b;
       return s.x > 0 && s.y > 0;
-    };
-
-    ChiliTag transform_tag(ChiliTag &src_tag, ofVec2f &scale)
-    {
-      ChiliTag t;
-      t.id = src_tag.id; 
-
-      ofVec2f center_t;
-      ofVec2f center_s = src_tag.center_n * scale;
-      _transform_pts(center_s, center_t);
-      t.center = center_t;
-
-      t.center_n.set(t.center / scale);
-
-      vector<ofVec2f> corners_t;
-      for (int j = 0; j < src_tag.corners_n.size(); j++)
-        corners_t.push_back(src_tag.corners_n[j] * scale);
-      _transform_pts(corners_t);  
-      t.corners = corners_t;
-
-      for ( int i = 0; i < t.corners.size(); i++ )
-        t.corners_n.push_back(t.corners[i] / scale);
-
-      t.dir.set(t.corners_n[0] - t.corners_n[1]);
-      t.dir.normalize();
-      t.angle = t.dir.angleRad(UP) + PI; 
-
-      return t;
-    };
+    }; 
 
     void render_calib_tags()
     {
@@ -282,21 +314,58 @@ class Calib
       ofPopStyle();
     };  
 
-    bool save()
+    bool save_H()
     {
-      cv::FileStorage fs( ofToDataPath(calib_file, false), cv::FileStorage::WRITE );
+      cv::FileStorage fs( ofToDataPath(H_cam_proj_file, false), cv::FileStorage::WRITE );
       fs << "homography" << H_cv;
       return true;
     };
 
-    bool load()
+    bool load_H()
     {
-      cv::FileStorage fs( ofToDataPath(calib_file, false), cv::FileStorage::READ ); 
+      cv::FileStorage fs( ofToDataPath(H_cam_proj_file, false), cv::FileStorage::READ ); 
       if ( !fs.isOpened() )
         return false;
       fs["homography"] >> H_cv;
       H_ready = true;
       return true;
     }; 
+
+    bool load_cam_calib()
+    {
+      cv::FileStorage fs( ofToDataPath(calib_cam_file, false), cv::FileStorage::READ ); 
+
+      if ( !fs.isOpened() )
+        return false;
+
+      //cam_calib.load(calib_cam_file, false);
+
+      cv::Size imageSize;
+      cv::Size2f sensorSize;
+      cv::Mat cameraMatrix;
+      cv::Mat distCoeffs;
+      float reprojectionError;
+
+      fs["cameraMatrix"] >> cameraMatrix;
+      fs["imageSize_width"] >> imageSize.width;
+      fs["imageSize_height"] >> imageSize.height;
+      fs["sensorSize_width"] >> sensorSize.width;
+      fs["sensorSize_height"] >> sensorSize.height;
+      fs["distCoeffs"] >> distCoeffs;
+      fs["reprojectionError"] >> reprojectionError; 
+
+      double k1 = distCoeffs.at<double>(0);
+      double k2 = distCoeffs.at<double>(1);
+      double p1 = distCoeffs.at<double>(2);
+      double p2 = distCoeffs.at<double>(3);
+      double k3 = distCoeffs.at<double>(4);
+      cam_calib.setDistortionCoefficients(k1, k2, p1, p2, k3);
+
+      ofxCv::Intrinsics intrinsics;
+      intrinsics.setup(cameraMatrix, imageSize, sensorSize);
+      cam_calib.setIntrinsics(intrinsics);
+
+      return true;
+    };
 };
 

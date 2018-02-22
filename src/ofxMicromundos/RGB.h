@@ -14,55 +14,55 @@ class RGB
 
     void init(float w, float h, int device_id)
     {
-      vid.setDeviceID(device_id);
-      vid.setDesiredFrameRate(30);
-      vid.initGrabber(w, h);
+      cam.setDeviceID(device_id);
+      cam.setDesiredFrameRate(30);
+      cam.setup(w, h);
       _updated = false;
     }; 
 
     bool update()
     {
-      vid.update();
-      _updated = vid.isFrameNew();
+      cam.update();
+      _updated = cam.isFrameNew();
       return _updated;
-      //pix = vid.getPixels();
+      //pix = cam.getPixels();
       //ofxCv::flip(pix, pix, 1); //some cameras need flipping
     };
 
     void render(float x, float y, float w, float h)
     {
       if (_updated)
-        tex.loadData(vid.getPixels());
+        tex.loadData(cam.getPixels());
       if (tex.isAllocated())
         tex.draw(x, y, w, h);
     };
 
     void dispose()
     {
-      vid.close();
+      cam.close();
       //pix.clear();
       tex.clear();
     };
 
     ofPixels& pixels()
     {
-      return vid.getPixels();
+      return cam.getPixels();
     };
 
     int width()
     {
-      return vid.getPixels().getWidth();
+      return cam.getPixels().getWidth();
     };
 
     int height()
     {
-      return vid.getPixels().getHeight();
+      return cam.getPixels().getHeight();
     };
 
   private:
 
     //ofPixels pix;
-    ofVideoGrabber vid;
+    ofVideoGrabber cam;
     ofTexture tex;
     bool _updated;
 

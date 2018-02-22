@@ -24,7 +24,8 @@ class Backend
         float cam_w, 
         float cam_h, 
         int cam_device_id, 
-        string calib_file, 
+        string calib_H_cam_proj_file, 
+        string calib_cam_file, 
         int calib_tag_id,
         cv::FileNode proj_pts,
         int port_bin = 0,
@@ -38,7 +39,8 @@ class Backend
 
       calib.init(
           proj_w, proj_h, 
-          calib_file, 
+          calib_H_cam_proj_file, 
+          calib_cam_file, 
           calib_tag_id,
           proj_pts);
 
@@ -57,7 +59,8 @@ class Backend
       if (!_updated)
         return false;
 
-      ofPixels &cam_pix = cam.pixels();
+      ofPixels cam_pix = cam.pixels();
+      calib.undistort(cam_pix);
 
       chilitags.update(cam_pix);
       vector<ChiliTag>& tags = chilitags.tags();
@@ -66,7 +69,7 @@ class Backend
 
       _calib_enabled = calib.enabled(tags);
       if (_calib_enabled)
-        calib.find(tags, proj_w, proj_h);
+        calib.calibrate(tags, proj_w, proj_h);
 
       calib.transform(seg.pixels(), proj_pix, proj_w, proj_h);
       proj_tex.loadData(proj_pix);
