@@ -66,18 +66,16 @@ class Backend
       chilitags.update(chili_pix);
       vector<ChiliTag>& tags = chilitags.tags();
 
-      ofPixels& seg_pix = seg.update(cam_pix, tags); 
-
       _calib_enabled = calib.enabled(tags);
       if (_calib_enabled)
         calib.calibrate(tags, proj_w, proj_h);
 
+      ofPixels& seg_pix = seg.update(cam_pix, tags); 
       calib.transform(seg_pix, proj_pix, proj_w, proj_h);
+      proj_pix_out.setFromPixels(proj_pix.getData(), proj_pix.getWidth(), proj_pix.getHeight(), proj_pix.getNumChannels());
 
       calib.transform(tags, proj_tags, proj_w, proj_h);
       tags_to_bloques(proj_tags, proj_bloques);
-
-      proj_pix_out.setFromPixels(proj_pix.getData(), proj_pix.getWidth(), proj_pix.getHeight(), proj_pix.getNumChannels());
 
       return true;
     };
@@ -231,7 +229,7 @@ class Backend
           remove.push_back(id);
       }
       for (const auto& id : remove)
-          bloques.erase(id);
+        bloques.erase(id);
     };
 
     void make_bloque(ChiliTag& t, map<int, Bloque>& bloques)

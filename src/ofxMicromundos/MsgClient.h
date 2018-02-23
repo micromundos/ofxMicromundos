@@ -195,6 +195,16 @@ class MsgClient
         else 
           update_bloque(id, bdata, bloques[id]);
       }
+
+      vector<int> remove;
+      for (const auto& bloque : bloques)
+      {
+        int id = bloque.first;
+        if (cur.find(id) == cur.end())
+          remove.push_back(id);
+      }
+      for (const auto& id : remove)
+        bloques.erase(id);
     };
 
     void make_bloque(int id, vector<string>& bdata, map<int, Bloque>& bloques)
