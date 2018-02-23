@@ -62,7 +62,7 @@ class Backend
       cam_pix = cam.pixels();
       calib.undistort(cam_pix);
 
-      chili_pix.setFromPixels(cam_pix.getData(), cam_pix.getWidth(), cam_pix.getHeight(), cam_pix.getNumChannels());
+      copy(cam_pix, chili_pix);
       chilitags.update(chili_pix);
       vector<ChiliTag>& tags = chilitags.tags();
 
@@ -70,9 +70,13 @@ class Backend
       if (_calib_enabled)
         calib.calibrate(tags, proj_w, proj_h);
 
-      ofPixels& seg_pix = seg.update(cam_pix, tags); 
+      seg.update(cam_pix, tags); 
+
+      ofPixels seg_pix;
+      copy(seg.pixels(), seg_pix);
       calib.transform(seg_pix, proj_pix, proj_w, proj_h);
-      proj_pix_out.setFromPixels(proj_pix.getData(), proj_pix.getWidth(), proj_pix.getHeight(), proj_pix.getNumChannels());
+
+      copy(proj_pix, proj_pix_out);
 
       calib.transform(tags, proj_tags, proj_w, proj_h);
       tags_to_bloques(proj_tags, proj_bloques);
@@ -153,9 +157,9 @@ class Backend
       cam.dispose();
       calib.dispose();
       seg.dispose();
+      chili_pix.clear();
       cam_pix.clear();
       cam_tex.clear();
-      chili_pix.clear();
       proj_pix.clear();
       proj_pix_out.clear();
       proj_tex.clear(); 
@@ -268,6 +272,11 @@ class Backend
       b.loc_i += (t.center_n - b.loc_i) * 0.2;
       b.dir_i += (t.dir - b.dir_i) * 0.2;
       b.angle_i = ofLerpRadians(b.angle_i, t.angle, 0.05);
+    };
+
+    void copy(ofPixels& src, ofPixels& dst)
+    {
+      dst.setFromPixels(src.getData(), src.getWidth(), src.getHeight(), src.getNumChannels());
     };
 };
 
