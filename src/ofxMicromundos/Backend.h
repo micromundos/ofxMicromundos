@@ -59,20 +59,20 @@ class Backend
       if (!_updated)
         return false;
 
-      ofPixels cam_pix = cam.pixels();
+      cam_pix = cam.pixels();
       calib.undistort(cam_pix);
 
-      chilitags.update(cam_pix);
+      chili_pix.setFromPixels(cam_pix.getData(), cam_pix.getWidth(), cam_pix.getHeight(), cam_pix.getNumChannels());
+      chilitags.update(chili_pix);
       vector<ChiliTag>& tags = chilitags.tags();
 
-      seg.update(cam_pix, tags); 
+      ofPixels& seg_pix = seg.update(cam_pix, tags); 
 
       _calib_enabled = calib.enabled(tags);
       if (_calib_enabled)
         calib.calibrate(tags, proj_w, proj_h);
 
-      calib.transform(seg.pixels(), proj_pix, proj_w, proj_h);
-      proj_tex.loadData(proj_pix);
+      calib.transform(seg_pix, proj_pix, proj_w, proj_h);
 
       calib.transform(tags, proj_tags, proj_w, proj_h);
       tags_to_bloques(proj_tags, proj_bloques);
@@ -104,6 +104,8 @@ class Backend
 
     void render_projected_pixels(float w, float h)
     { 
+      if (proj_pix.isAllocated())
+        proj_tex.loadData(proj_pix);
       if (proj_tex.isAllocated())
         proj_tex.draw(0, 0, w, h);
     };
@@ -129,12 +131,18 @@ class Backend
 
     void render_monitor(float x, float y, float w, float h)
     {
-      float _w = w/2;
-      //left
+      float _w = w/3;
+
       cam.render(x, y, _w, h);
-      chilitags.render(x, y, _w, h);
-      //right
-      seg.render(x + _w, y, _w, h);
+
+      if (cam_pix.isAllocated())
+        cam_tex.loadData(cam_pix);
+      if (cam_tex.isAllocated())
+        cam_tex.draw(x + _w, y, _w, h);
+
+      chilitags.render(x + _w, y, _w, h);
+
+      seg.render(x + _w*2, y, _w, h);
     };
 
     void render_server_info(float x, float y)
@@ -147,9 +155,12 @@ class Backend
       cam.dispose();
       calib.dispose();
       seg.dispose();
+      cam_pix.clear();
+      cam_tex.clear();
+      chili_pix.clear();
       proj_pix.clear();
       proj_pix_out.clear();
-      proj_tex.clear();
+      proj_tex.clear(); 
       proj_tags.clear();
       proj_bloques.clear();
       server.dispose();
@@ -160,10 +171,10 @@ class Backend
       return proj_pix_out;
     };
 
-    ofTexture& projected_texture()
-    {
-      return proj_tex;
-    };
+    //ofTexture& projected_texture()
+    //{
+      //return proj_tex;
+    //};
 
     map<int, Bloque>& projected_bloques()
     {
@@ -187,6 +198,9 @@ class Backend
     Segmentation seg;
     ofxChilitags chilitags;
 
+    ofPixels cam_pix;
+    ofPixels chili_pix;
+    ofTexture cam_tex;
     ofPixels proj_pix;
     ofPixels proj_pix_out;
     ofTexture proj_tex;

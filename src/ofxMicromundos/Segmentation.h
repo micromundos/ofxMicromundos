@@ -15,7 +15,7 @@ class Segmentation
 
     void init() {};
 
-    void update(ofPixels& pix, vector<ChiliTag>& tags)
+    ofPixels& update(ofPixels& pix, vector<ChiliTag>& tags)
     {
       ofxCv::copyGray(pix, bin_mat);
       ofxCv::autothreshold(bin_mat, false);
@@ -29,6 +29,8 @@ class Segmentation
       ofxCv::erode(bin_mat, 4);
 
       ofxCv::toOf(bin_mat, bin_pix); 
+
+      return bin_pix;
     };
 
     void render(float x, float y, float w, float h)
@@ -45,10 +47,10 @@ class Segmentation
       bin_tex.clear();
     };
 
-    ofPixels& pixels()
-    {
-      return bin_pix;
-    };
+    //ofPixels& pixels()
+    //{
+      //return bin_pix;
+    //};
 
   private:
 
