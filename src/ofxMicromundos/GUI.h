@@ -8,6 +8,7 @@ class GUI
   public:
 
     ofParameter<bool> backend_monitor;
+    ofParameter<bool> print_bloques;
     ofParameter<bool> send;
 
     void init_params()
@@ -17,6 +18,9 @@ class GUI
 
       p.add( send
           .set("send", true) );
+
+      p.add( print_bloques
+          .set("print_bloques", true) );
     }; 
 
     void init(float w)

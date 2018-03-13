@@ -101,7 +101,7 @@ class WebSockets
       return msg;
     };
 
-    void render_info(float x, float y)
+    void print_info(float x, float y)
     {
       if (!connected)
       {
@@ -112,7 +112,6 @@ class WebSockets
       float lh = 24; 
 
       ofDrawBitmapStringHighlight("websockets server bin port: "+ofToString(server_bin.getPort()), x, y, ofColor::green, ofColor::black);
-      y += lh; 
 
       vector<ofxLibwebsockets::Connection*> conns_bin = server_bin.getConnections();
       for (int i = 0; i < conns_bin.size(); i++)
@@ -122,16 +121,14 @@ class WebSockets
         string name = conn->getClientName();
         string ip = conn->getClientIP();
         string info = "client "+name+" from ip "+ip;
-        ofColor color = ofColor(255-i*30, 255-i*20, 100+i*40);
 
-        ofDrawBitmapStringHighlight(info, x, y, color, ofColor::black);
         y += lh;
+        ofDrawBitmapString(info, x, y);
       }
 
       y += lh; 
 
       ofDrawBitmapStringHighlight("websockets server msg port: "+ofToString(server_msg.getPort()), x, y, ofColor::green, ofColor::black);
-      y += lh;
 
       vector<ofxLibwebsockets::Connection*> conns_msg = server_msg.getConnections();
       for (int i = 0; i < conns_msg.size(); i++)
@@ -140,11 +137,10 @@ class WebSockets
 
         string name = conn->getClientName();
         string ip = conn->getClientIP();
-        string info = "client "+name+" from "+ip;
-        ofColor color = ofColor(255-i*30, 255-i*20, 100+i*40);
+        string info = "client "+name+" from ip "+ip;
 
-        ofDrawBitmapStringHighlight(info, x, y, color, ofColor::black);
         y += lh;
+        ofDrawBitmapString(info, x, y);
       }
     };
 

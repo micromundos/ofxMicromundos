@@ -147,9 +147,30 @@ class Backend
       seg.render(x + _w*2, y, _w, h);
     };
 
-    void render_server_info(float x, float y)
+    void print_server_info(float x, float y)
     { 
-      server.render_info(x, y);
+      server.print_info(x, y);
+    }; 
+
+    void print_bloques(float x, float y)
+    {
+      float lh = 24;
+      y += lh/2;
+      ofDrawBitmapStringHighlight("bloques", x, y, ofColor::yellow, ofColor::black);
+      y += lh;
+      for (auto& bloque : proj_bloques)
+      {
+        Bloque& b = bloque.second;
+        stringstream bstr;
+        bstr
+          << " id " << b.id
+          << " loc " << b.loc;
+          //<< " dir " << b.dir
+          //<< " radio " << b.radio
+          //<< " angle " << b.angle;
+        ofDrawBitmapStringHighlight(bstr.str(), x, y, ofColor::yellow, ofColor::black);
+        y += lh;
+      }
     }; 
 
     void dispose()
