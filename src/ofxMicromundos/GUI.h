@@ -16,11 +16,11 @@ class GUI
       p.add( backend_monitor
           .set("backend_monitor", true) );
 
-      p.add( send
-          .set("send", true) );
-
       p.add( print_bloques
           .set("print_bloques", true) );
+
+      p.add( send
+          .set("send", true) ); 
     }; 
 
     void init(float w)

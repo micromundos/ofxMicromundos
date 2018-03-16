@@ -213,7 +213,7 @@ class Calib
       cv::Mat srcMat = toCv(src);
       cv::Mat dstMat = toCv(dst);
       cv::warpPerspective(srcMat, dstMat, H_cv, srcMat.size(), cv::INTER_LINEAR);
-      toOf(dstMat, dst);
+      //toOf(dstMat, dst); //Segmentation fault RPI
     };
 
     void transform_pix(ofPixels& pix)
