@@ -28,11 +28,13 @@ class Backend
         string calib_cam_file, 
         int calib_tag_id,
         cv::FileNode proj_pts,
+        float resize = 1.0,
         int port_bin = 0,
         int port_msg = 0)
     {
       this->proj_w = proj_w;
       this->proj_h = proj_h;
+      this->resize = resize;
 
       _calib_enabled = false;
       _updated = false;
@@ -70,13 +72,14 @@ class Backend
       if (_calib_enabled)
         calib.calibrate(tags, proj_w, proj_h);
 
+      //ofPixels seg_pix_in;
+      //ofxCv::resize(cam_pix, seg_pix_in, resize, resize);
       seg.update(cam_pix, tags); 
 
       ofPixels seg_pix;
       copy(seg.pixels(), seg_pix);
       calib.transform(seg_pix, proj_pix, proj_w, proj_h);
-
-      copy(proj_pix, proj_pix_out);
+      //copy(proj_pix, proj_pix_out);
 
       calib.transform(tags, proj_tags, proj_w, proj_h);
       tags_to_bloques(proj_tags, proj_bloques);
@@ -84,11 +87,12 @@ class Backend
       return true;
     };
 
-    bool send(float resize = 1.0)
+    bool send()
     {
       if (!_updated) return false;
       return server.send(
-          proj_pix_out, 
+          proj_pix, 
+          //proj_pix_out, 
           proj_bloques, 
           _calib_enabled, 
           resize);
@@ -182,7 +186,7 @@ class Backend
       cam_pix.clear();
       cam_tex.clear();
       proj_pix.clear();
-      proj_pix_out.clear();
+      //proj_pix_out.clear();
       proj_tex.clear(); 
       proj_tags.clear();
       proj_bloques.clear();
@@ -191,7 +195,8 @@ class Backend
 
     ofPixels& projected_pixels()
     {
-      return proj_pix_out;
+      return proj_pix;
+      //return proj_pix_out;
     };
 
     //ofTexture& projected_texture()
@@ -212,6 +217,7 @@ class Backend
   private:
 
     float proj_w, proj_h;
+    float resize;
     float _calib_enabled;
     bool _updated;
 
@@ -225,7 +231,7 @@ class Backend
     ofPixels chili_pix;
     ofTexture cam_tex;
     ofPixels proj_pix;
-    ofPixels proj_pix_out;
+    //ofPixels proj_pix_out;
     ofTexture proj_tex;
 
     vector<ChiliTag> proj_tags;

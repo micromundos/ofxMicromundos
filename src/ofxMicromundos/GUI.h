@@ -28,8 +28,8 @@ class GUI
       ofxBaseGui::setDefaultWidth(w);
       p.setName("params");
       init_params();
-      gui.setup(p, "server_gui.xml");
-      gui.loadFromFile("server_gui.xml");
+      gui.setup(p, "backend_gui.xml");
+      gui.loadFromFile("backend_gui.xml");
     }; 
 
     void render(float x, float y)
