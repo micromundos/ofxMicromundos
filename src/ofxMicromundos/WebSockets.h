@@ -35,8 +35,17 @@ class WebSockets
       server_msg.exit();
     };
 
-    bool send(ofPixels& pix, map<int, Bloque>& bloques, bool calib_enabled, float resize)
+    bool send( 
+        ofPixels& pix,
+        map<int, Bloque>& bloques, 
+        bool message, 
+        bool binary,
+        bool calib_enabled, 
+        float resize)
     {
+      if (!message && !binary)
+        return false;
+
       if (!connected)
         return false; 
 
@@ -49,8 +58,11 @@ class WebSockets
       else
         opix = &pix;
 
-      server_msg.send(serialize(*opix, bloques, calib_enabled));
-      server_bin.sendBinary(opix->getData(), opix->getTotalBytes());
+      if (message)
+        server_msg.send(serialize(*opix, bloques, calib_enabled));
+
+      if (binary)
+        server_bin.sendBinary(opix->getData(), opix->getTotalBytes());
 
       return true;
     };

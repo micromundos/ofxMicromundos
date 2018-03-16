@@ -87,13 +87,16 @@ class Backend
       return true;
     };
 
-    bool send()
+    bool send(bool message, bool binary)
     {
-      if (!_updated) return false;
-      return server.send(
+      if (!_updated) 
+        return false;
+      return server.send( 
           proj_pix, 
           //proj_pix_out, 
           proj_bloques, 
+          message, 
+          binary,
           _calib_enabled, 
           resize);
     };
