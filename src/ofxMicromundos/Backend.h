@@ -79,7 +79,9 @@ class Backend
       ofPixels seg_pix;
       copy(seg.pixels(), seg_pix);
       calib.transform(seg_pix, proj_pix, proj_w, proj_h);
+
       //copy(proj_pix, proj_pix_out);
+      proj_tex.loadData(proj_pix);
 
       calib.transform(tags, proj_tags, proj_w, proj_h);
       tags_to_bloques(proj_tags, proj_bloques);
@@ -87,7 +89,10 @@ class Backend
       return true;
     };
 
-    bool send(bool message, bool binary)
+    bool send(
+        bool message_enabled, 
+        bool binary_enabled, 
+        bool syphon_enabled)
     {
       if (!_updated) 
         return false;
@@ -95,8 +100,9 @@ class Backend
           proj_pix, 
           //proj_pix_out, 
           proj_bloques, 
-          message, 
-          binary,
+          message_enabled, 
+          binary_enabled,
+          syphon_enabled,
           _calib_enabled, 
           resize);
     };
@@ -112,9 +118,7 @@ class Backend
     };
 
     void render_projected_pixels(float w, float h)
-    { 
-      if (proj_pix.isAllocated())
-        proj_tex.loadData(proj_pix);
+    {  
       if (proj_tex.isAllocated())
         proj_tex.draw(0, 0, w, h);
     };
@@ -202,10 +206,10 @@ class Backend
       //return proj_pix_out;
     };
 
-    //ofTexture& projected_texture()
-    //{
-      //return proj_tex;
-    //};
+    ofTexture& projected_texture()
+    {
+      return proj_tex;
+    };
 
     map<int, Bloque>& projected_bloques()
     {

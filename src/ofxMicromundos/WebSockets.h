@@ -4,9 +4,6 @@
 #include "ofxLibwebsockets.h"
 #include "ofxMicromundos/Bloque.h"
 
-//serialization
-//pixels:dim=640,480#chan=1_bloques:id=0#loc=0,0#dir=0,0#ang=0;id=1#loc=1,1#dir=1,1#ang=1#radio=1
-
 class WebSockets
 {
   public:
@@ -38,12 +35,13 @@ class WebSockets
     bool send( 
         ofPixels& pix,
         map<int, Bloque>& bloques, 
-        bool message, 
-        bool binary,
+        bool message_enabled, 
+        bool binary_enabled,
+        bool syphon_enabled,
         bool calib_enabled, 
         float resize)
     {
-      if (!message && !binary)
+      if (!message_enabled && !binary_enabled)
         return false;
 
       if (!connected)
@@ -58,16 +56,20 @@ class WebSockets
       else
         opix = &pix;
 
-      if (message)
-        server_msg.send(serialize(*opix, bloques, calib_enabled));
+      if (message_enabled)
+        server_msg.send(serialize(*opix, bloques, binary_enabled, syphon_enabled, calib_enabled));
 
-      if (binary)
+      if (binary_enabled)
         server_bin.sendBinary(opix->getData(), opix->getTotalBytes());
 
       return true;
     };
 
-    string serialize(ofPixels& pix, map<int, Bloque>& bloques, bool calib_enabled)
+    //pixels:dim=640,480#chan=1
+    //_net:bin=1#syphon=0
+    //_calib:enabled=1
+    //_bloques:id=0#loc=0,0#dir=0,0#ang=0#r=0;id=1#loc=1,1#dir=1,1#ang=1#r=1
+    string serialize(ofPixels& pix, map<int, Bloque>& bloques, bool binary_enabled, bool syphon_enabled, bool calib_enabled)
     {
       string msg = "";
 
@@ -76,9 +78,14 @@ class WebSockets
           + ofToString(pix.getWidth()) + ","
           + ofToString(pix.getHeight()) + "#"
         + "chan=" 
-          + ofToString(pix.getNumChannels());
+          + ofToString(pix.getNumChannels());  
 
-      msg += "_calib:enabled=" + ofToString(calib_enabled);
+      msg += "_net:";
+      msg += "bin=" + ofToString(binary_enabled) + "#"
+        + "syphon=" + ofToString(syphon_enabled); 
+
+      msg += "_calib:enabled=" 
+        + ofToString(calib_enabled);
 
       msg += "_bloques:";
 

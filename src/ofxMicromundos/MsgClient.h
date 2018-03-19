@@ -22,6 +22,8 @@ class MsgClient
       _pix_w = 0;
       _pix_h = 0;
       _pix_chan = 0;
+      _binary_enabled = false;
+      _syphon_enabled = false;
       _calib_enabled = false;
     };
 
@@ -52,14 +54,19 @@ class MsgClient
       ofDrawBitmapStringHighlight(info, x, y+lh/2);
     };
 
+    //TODO agregar en pixels _bincomm=ws|syphon
     void print_metadata(float x, float y)
     {
       stringstream msg;
       msg << "metadata= "
-        << " pix:" 
-          << " w " << _pix_w
-          << " h " << _pix_h 
-          << " chan " << _pix_chan
+        << " pixels:" 
+          << " dim " << _pix_w << "," << _pix_h 
+          << " chan " << _pix_chan 
+        << "\n"
+        << " net:"
+          << " binary " << _binary_enabled
+          << " syphon " << _syphon_enabled
+        << "\n"
         << " calib:" 
           << " enabled " << _calib_enabled;
       float lh = 24;
@@ -119,6 +126,8 @@ class MsgClient
     int pix_width() { return _pix_w; };
     int pix_height() { return _pix_h; };
     int pix_chan() { return _pix_chan; };
+    bool binary_enabled() { return _binary_enabled; }
+    bool syphon_enabled() { return _syphon_enabled; }
     bool calib_enabled() { return _calib_enabled; };
 
     bool pix_ready()
@@ -138,6 +147,7 @@ class MsgClient
 
     string message;
     int _pix_w, _pix_h, _pix_chan;
+    bool _binary_enabled, _syphon_enabled;
     bool _calib_enabled;
     map<int, Bloque> _bloques;
 
@@ -149,32 +159,46 @@ class MsgClient
         parse_pix_data(data[0]);
 
       if (data.size() > 1)
-        parse_calib_data(data[1]);
+        parse_net_data(data[1]);
 
       if (data.size() > 2)
-        parse_bloques(ofSplitString(ofSplitString(data[2], ":")[1], ";"), _bloques);
+        parse_calib_data(data[2]);
+
+      if (data.size() > 3)
+        parse_bloques(ofSplitString(ofSplitString(data[3], ":")[1], ";"), _bloques);
     };
 
-    void parse_pix_data(string pix_data_str)
+    void parse_pix_data(string data_str)
     {
-      vector<string> pd = ofSplitString(pix_data_str, ":");
-      if (pd.size() > 1)
+      vector<string> data = ofSplitString(data_str, ":");
+      if (data.size() > 1)
       {
-        vector<string> pix_data = ofSplitString(pd[1], "#");
-        ofVec2f dim = d2vec(pix_data[0]);
+        vector<string> d = ofSplitString(data[1], "#");
+        ofVec2f dim = d2vec(d[0]);
         _pix_w = dim.x;
         _pix_h = dim.y;
-        _pix_chan = d2i(pix_data[1]);
+        _pix_chan = d2i(d[1]);
+      }
+    }; 
+
+    void parse_net_data(string data_str)
+    {
+      vector<string> data = ofSplitString(data_str, ":");
+      if (data.size() > 1)
+      {
+        vector<string> d = ofSplitString(data[1], "#");
+        _binary_enabled = bool(d2i(d[0]));
+        _syphon_enabled = bool(d2i(d[1]));
       }
     };
 
-    void parse_calib_data(string calib_str)
+    void parse_calib_data(string data_str)
     {
-      vector<string> cd = ofSplitString(calib_str, ":");
-      if (cd.size() > 1)
+      vector<string> data = ofSplitString(data_str, ":");
+      if (data.size() > 1)
       {
-        vector<string> cdata = ofSplitString(cd[1], "#");
-        _calib_enabled = bool(d2i(cdata[0]));
+        vector<string> d = ofSplitString(data[1], "#");
+        _calib_enabled = bool(d2i(d[0]));
       }
     };
 
