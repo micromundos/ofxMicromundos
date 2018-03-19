@@ -13,7 +13,13 @@ class MsgClient
 
     void init(string host, int port)
     {
-      client.connect(host, port);
+      ofxLibwebsockets::ClientOptions opt = ofxLibwebsockets::defaultClientOptions();
+      opt.host = host;
+      opt.port = port;
+      opt.reconnect = true;
+      opt.reconnectInterval = 3000;
+      client.connect(opt);
+      //client.connect(host, port);
       client.addListener(this);
 
       received = false;
@@ -54,7 +60,6 @@ class MsgClient
       ofDrawBitmapStringHighlight(info, x, y+lh/2);
     };
 
-    //TODO agregar en pixels _bincomm=ws|syphon
     void print_metadata(float x, float y)
     {
       stringstream msg;
@@ -109,16 +114,24 @@ class MsgClient
     };
 
     void onConnect( ofxLibwebsockets::Event& args )
-    {};
+    {
+      //ofLog() << "on connect";
+    };
 
     void onOpen( ofxLibwebsockets::Event& args )
-    {};
+    {
+      //ofLog() << "on open";
+    };
 
     void onClose( ofxLibwebsockets::Event& args )
-    {};
+    {
+      //ofLog() << "on close";
+    };
 
     void onIdle( ofxLibwebsockets::Event& args )
-    {};
+    {
+      //ofLog() << "on idle";
+    };
 
     void onBroadcast( ofxLibwebsockets::Event& args )
     {}; 

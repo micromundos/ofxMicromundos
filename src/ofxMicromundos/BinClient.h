@@ -12,8 +12,15 @@ class BinClient
 
     void init(string host, int port)
     {
-      client.connect(host, port);
+      ofxLibwebsockets::ClientOptions opt = ofxLibwebsockets::defaultClientOptions();
+      opt.host = host;
+      opt.port = port;
+      opt.reconnect = true;
+      opt.reconnectInterval = 3000;
+      client.connect(opt);
+      //client.connect(host, port);
       client.addListener(this);
+
       received = false;
       locked = false;
     };
