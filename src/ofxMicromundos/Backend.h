@@ -27,16 +27,16 @@ class Backend
         int cam_device_id, 
         string calib_H_cam_proj_file, 
         string calib_cam_file, 
+        float resize_bin,
         int calib_tag_id,
         cv::FileNode proj_pts,
         cv::FileNode juegos_config,
-        float resize = 1.0,
-        int port_bin = 0,
-        int port_msg = 0)
+        int port_bin,
+        int port_msg)
     {
       this->proj_w = proj_w;
       this->proj_h = proj_h;
-      this->resize = resize;
+      this->resize_bin = resize_bin;
 
       _calib_enabled = false;
       _updated = false;
@@ -52,8 +52,7 @@ class Backend
       chilitags.init(); 
       seg.init();
 
-      if (port_bin != 0 && port_msg != 0)
-        server.init(port_bin, port_msg);
+      server.init(port_bin, port_msg);
 
       juegos.init(juegos_config);
     };
@@ -77,7 +76,7 @@ class Backend
         calib.calibrate(tags, proj_w, proj_h);
 
       //ofPixels seg_pix_in;
-      //ofxCv::resize(cam_pix, seg_pix_in, resize, resize);
+      //ofxCv::resize(cam_pix, seg_pix_in, resize_bin, resize_bin);
       seg.update(cam_pix, tags); 
 
       ofPixels seg_pix;
@@ -111,7 +110,7 @@ class Backend
           syphon_enabled,
           _calib_enabled, 
           juegos.active(),
-          resize);
+          resize_bin);
     };
 
     bool render_calib(float w, float h)
@@ -231,7 +230,7 @@ class Backend
   private:
 
     float proj_w, proj_h;
-    float resize;
+    float resize_bin;
     float _calib_enabled;
     bool _updated;
 
