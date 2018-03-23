@@ -6,7 +6,7 @@
 #include "ofxMicromundos/Calib.h"
 #include "ofxMicromundos/Segmentation.h"
 #include "ofxMicromundos/Bloque.h"
-#include "ofxMicromundos/Cartuchos.h"
+#include "ofxMicromundos/Juegos.h"
 
 //TODO Backend with ofThread
 class Backend
@@ -29,7 +29,7 @@ class Backend
         string calib_cam_file, 
         int calib_tag_id,
         cv::FileNode proj_pts,
-        cv::FileStorage cartuchos_config,
+        cv::FileNode juegos_config,
         float resize = 1.0,
         int port_bin = 0,
         int port_msg = 0)
@@ -55,7 +55,7 @@ class Backend
       if (port_bin != 0 && port_msg != 0)
         server.init(port_bin, port_msg);
 
-      cartuchos.init(cartuchos_config);
+      juegos.init(juegos_config);
     };
 
     bool update()
@@ -90,7 +90,7 @@ class Backend
       calib.transform(tags, proj_tags, proj_w, proj_h);
       tags_to_bloques(proj_tags, proj_bloques);
 
-      cartuchos.update(proj_bloques);
+      juegos.update(proj_bloques);
 
       return true;
     };
@@ -110,7 +110,7 @@ class Backend
           binary_enabled,
           syphon_enabled,
           _calib_enabled, 
-          cartuchos.active(),
+          juegos.active(),
           resize);
     };
 
@@ -240,7 +240,7 @@ class Backend
     Calib calib;
     Segmentation seg;
     ofxChilitags chilitags;
-    Cartuchos cartuchos;
+    Juegos juegos;
 
     ofPixels cam_pix;
     ofPixels chili_pix;

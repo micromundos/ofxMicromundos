@@ -31,7 +31,7 @@ class MsgClient
       _binary_enabled = false;
       _syphon_enabled = false;
       _calib_enabled = false;
-      _cartucho_active = "";
+      _juego_active = "";
     };
 
     void dispose()
@@ -76,8 +76,8 @@ class MsgClient
         << " calib:" 
           << " enabled " << _calib_enabled
         << "\n"
-        << " cartuchos:"
-          << " active " << _cartucho_active;
+        << " juegos:"
+          << " active " << _juego_active;
       float lh = 24;
       ofDrawBitmapStringHighlight(msg.str(), x, y+lh/2);
     };
@@ -148,9 +148,9 @@ class MsgClient
     bool syphon_enabled() { return _syphon_enabled; }
     bool calib_enabled() { return _calib_enabled; };
 
-    bool cartucho_active(string name) 
+    bool juego_active(string name) 
     { 
-      return _cartucho_active == name; 
+      return _juego_active == name; 
     };
 
     bool pix_ready()
@@ -172,7 +172,7 @@ class MsgClient
     int _pix_w, _pix_h, _pix_chan;
     bool _binary_enabled, _syphon_enabled;
     bool _calib_enabled;
-    string _cartucho_active;
+    string _juego_active;
     map<int, Bloque> _bloques;
 
     void deserialize(string message)
@@ -189,7 +189,7 @@ class MsgClient
         parse_calib_data(data[2]);
 
       if (data.size() > 3)
-        parse_cartuchos(data[3]);
+        parse_juegos_data(data[3]);
 
       if (data.size() > 4)
         parse_bloques(data[4], _bloques);
@@ -229,13 +229,13 @@ class MsgClient
       }
     };
 
-    void parse_cartuchos(string data_str)
+    void parse_juegos_data(string data_str)
     {
       vector<string> data = ofSplitString(data_str, ":");
       if (data.size() > 1)
       {
         vector<string> d = ofSplitString(data[1], "#");
-        _cartucho_active = d[0];
+        _juego_active = d[0];
       }
     };
 

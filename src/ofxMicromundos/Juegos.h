@@ -2,26 +2,25 @@
 
 #include "ofxMicromundos/Bloque.h"
 
-class Cartuchos
+class Juegos
 {
   public:
 
-    Cartuchos() {};
-    ~Cartuchos() {};
+    Juegos() {};
+    ~Juegos() {};
 
-    void init(cv::FileStorage cartuchos_config)
+    void init(cv::FileNode juegos_config)
     {
-      this->cartuchos_config = cartuchos_config;
+      this->juegos_config = juegos_config;
       cur = "";
     };
 
     void update(map<int, Bloque> bloques)
     {
-      cv::FileNode root = cartuchos_config.root();
-      for (cv::FileNodeIterator it = root.begin(); it != root.end(); it++)
+      for (cv::FileNodeIterator it = juegos_config.begin(); it != juegos_config.end(); it++)
       {
         string name = (*it).name();
-        int id = (int)root[name];
+        int id = (int)juegos_config[name]["tag_id"];
         if (bloques.find(id) != bloques.end())
         {
           cur = name;
@@ -38,12 +37,11 @@ class Cartuchos
     bool active(string name)
     {
       return cur == name;
-      //return cur == (int)cartuchos_config[name];
     };
 
   private:
 
-    cv::FileStorage cartuchos_config;
+    cv::FileNode juegos_config;
     string cur;
 };
 

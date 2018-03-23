@@ -86,9 +86,9 @@ class BackendClient
       return msg.bloques();
     };
 
-    bool cartucho_active(string name) 
+    bool juego_active(string name) 
     { 
-      return msg.cartucho_active(name); 
+      return msg.juego_active(name); 
     };
 
     bool calib_enabled() { return msg.calib_enabled(); };
