@@ -31,6 +31,7 @@ class MsgClient
       _binary_enabled = false;
       _syphon_enabled = false;
       _calib_enabled = false;
+      _cartucho_active = "";
     };
 
     void dispose()
@@ -42,7 +43,7 @@ class MsgClient
     {
       if ( !received )
         return false;
-      parse();
+      deserialize(message);
       received = false;
       locked = false;
       return true;
@@ -73,7 +74,10 @@ class MsgClient
           << " syphon " << _syphon_enabled
         << "\n"
         << " calib:" 
-          << " enabled " << _calib_enabled;
+          << " enabled " << _calib_enabled
+        << "\n"
+        << " cartuchos:"
+          << " active " << _cartucho_active;
       float lh = 24;
       ofDrawBitmapStringHighlight(msg.str(), x, y+lh/2);
     };
@@ -139,9 +143,15 @@ class MsgClient
     int pix_width() { return _pix_w; };
     int pix_height() { return _pix_h; };
     int pix_chan() { return _pix_chan; };
+
     bool binary_enabled() { return _binary_enabled; }
     bool syphon_enabled() { return _syphon_enabled; }
     bool calib_enabled() { return _calib_enabled; };
+
+    bool cartucho_active(string name) 
+    { 
+      return _cartucho_active == name; 
+    };
 
     bool pix_ready()
     {
@@ -162,9 +172,10 @@ class MsgClient
     int _pix_w, _pix_h, _pix_chan;
     bool _binary_enabled, _syphon_enabled;
     bool _calib_enabled;
+    string _cartucho_active;
     map<int, Bloque> _bloques;
 
-    void parse()
+    void deserialize(string message)
     {
       vector<string> data = ofSplitString(message, "_");
 
@@ -178,7 +189,10 @@ class MsgClient
         parse_calib_data(data[2]);
 
       if (data.size() > 3)
-        parse_bloques(ofSplitString(ofSplitString(data[3], ":")[1], ";"), _bloques);
+        parse_cartuchos(data[3]);
+
+      if (data.size() > 4)
+        parse_bloques(data[4], _bloques);
     };
 
     void parse_pix_data(string data_str)
@@ -215,9 +229,21 @@ class MsgClient
       }
     };
 
-    //see Backend->tags_to_bloques
-    void parse_bloques(vector<string> bloques_str, map<int, Bloque>& bloques)
+    void parse_cartuchos(string data_str)
     {
+      vector<string> data = ofSplitString(data_str, ":");
+      if (data.size() > 1)
+      {
+        vector<string> d = ofSplitString(data[1], "#");
+        _cartucho_active = d[0];
+      }
+    };
+
+    //see Backend->tags_to_bloques
+    void parse_bloques(string data_str, map<int, Bloque>& bloques)
+    {
+      vector<string> bloques_str = ofSplitString(ofSplitString(data_str, ":")[1], ";");
+
       map<int,bool> cur;
 
       for (auto& b : bloques_str)

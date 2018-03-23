@@ -12,7 +12,7 @@ class Cartuchos
     void init(cv::FileStorage cartuchos_config)
     {
       this->cartuchos_config = cartuchos_config;
-      cur = -1;
+      cur = "";
     };
 
     void update(map<int, Bloque> bloques)
@@ -20,23 +20,30 @@ class Cartuchos
       cv::FileNode root = cartuchos_config.root();
       for (cv::FileNodeIterator it = root.begin(); it != root.end(); it++)
       {
-        int id = (int)root[(*it).name()];
+        string name = (*it).name();
+        int id = (int)root[name];
         if (bloques.find(id) != bloques.end())
         {
-          cur = id;
+          cur = name;
           break;
         }
       }
     };
 
+    string active()
+    {
+      return cur;
+    };
+
     bool active(string name)
     {
-      return cur == (int)cartuchos_config[name];
+      return cur == name;
+      //return cur == (int)cartuchos_config[name];
     };
 
   private:
 
     cv::FileStorage cartuchos_config;
-    int cur;
+    string cur;
 };
 

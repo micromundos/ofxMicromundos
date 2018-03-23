@@ -37,7 +37,7 @@ class BinClient
     {
       if ( !received )
         return false;
-      parse(pix_w, pix_h, pix_chan);
+      deserialize(pix_data, pix_w, pix_h, pix_chan);
       received = false;
       locked = false;
       return true;
@@ -109,7 +109,7 @@ class BinClient
     ofPixels pix;
     ofTexture tex;
 
-    void parse(int pix_w, int pix_h, int pix_chan)
+    void deserialize(char* pix_data, int pix_w, int pix_h, int pix_chan)
     {
       if (pix_data == nullptr)
       {

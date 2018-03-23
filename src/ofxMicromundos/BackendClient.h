@@ -86,11 +86,16 @@ class BackendClient
       return msg.bloques();
     };
 
+    bool cartucho_active(string name) 
+    { 
+      return msg.cartucho_active(name); 
+    };
+
     bool calib_enabled() { return msg.calib_enabled(); };
-    bool syphon_enabled() { return msg.syphon_enabled(); };
+    bool syphon_enabled() { return msg.syphon_enabled(); }; 
     //int pix_width() { return msg.pix_width(); };
     //int pix_height() { return msg.pix_height(); };
-    //int pix_ready() { return msg.pix_ready(); };
+    //int pix_ready() { return msg.pix_ready(); }; 
 
   private:
 

@@ -39,6 +39,7 @@ class WebSockets
         bool binary_enabled,
         bool syphon_enabled,
         bool calib_enabled, 
+        string cartucho_active,
         float resize)
     {
       if (!message_enabled && !binary_enabled)
@@ -57,7 +58,7 @@ class WebSockets
         opix = &pix;
 
       if (message_enabled)
-        server_msg.send(serialize(*opix, bloques, binary_enabled, syphon_enabled, calib_enabled));
+        server_msg.send(serialize(*opix, bloques, binary_enabled, syphon_enabled, calib_enabled, cartucho_active));
 
       if (binary_enabled)
         server_bin.sendBinary(opix->getData(), opix->getTotalBytes());
@@ -68,8 +69,9 @@ class WebSockets
     //pixels:dim=640,480#chan=1
     //_net:bin=1#syphon=0
     //_calib:enabled=1
+    //_cartuchos:active=pepe
     //_bloques:id=0#loc=0,0#dir=0,0#ang=0#r=0;id=1#loc=1,1#dir=1,1#ang=1#r=1
-    string serialize(ofPixels& pix, map<int, Bloque>& bloques, bool binary_enabled, bool syphon_enabled, bool calib_enabled)
+    string serialize(ofPixels& pix, map<int, Bloque>& bloques, bool binary_enabled, bool syphon_enabled, bool calib_enabled, string cartucho_active)
     {
       string msg = "";
 
@@ -86,6 +88,9 @@ class WebSockets
 
       msg += "_calib:enabled=" 
         + ofToString(calib_enabled);
+
+      msg += "_cartuchos:active=" 
+        + cartucho_active;
 
       msg += "_bloques:";
 
