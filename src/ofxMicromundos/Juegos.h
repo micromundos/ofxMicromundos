@@ -36,7 +36,7 @@ class Juegos
 
     bool active(string name)
     {
-      return cur == name;
+      return cur.compare(name) == 0;
     };
 
   private:

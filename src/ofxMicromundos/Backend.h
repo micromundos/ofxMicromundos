@@ -164,10 +164,35 @@ class Backend
       seg.render(x + _w*2, y, _w, h);
     };
 
-    void print_server_info(float x, float y)
+    void print_connection(float x, float y)
     { 
-      server.print_info(x, y);
+      server.print_connection(x, y);
     }; 
+
+    void print_metadata(float x, float y)
+    {
+      stringstream msg;
+      msg << "metadata= ";
+
+      if (proj_pix.isAllocated())
+      {
+        msg << " pixels:" 
+            << " dim " 
+              << proj_pix.getWidth() << "," 
+              << proj_pix.getHeight()
+            << " chan " << proj_pix.getNumChannels()
+          << "\n";
+      }
+
+      msg << " calib:" 
+          << " enabled " << _calib_enabled
+        << "\n"
+        << " juegos:"
+          << " active " << juegos.active();
+
+      float lh = 24;
+      ofDrawBitmapStringHighlight(msg.str(), x, y+lh/2);
+    };
 
     void print_bloques(float x, float y)
     {

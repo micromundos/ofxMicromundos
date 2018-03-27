@@ -148,9 +148,14 @@ class MsgClient
     bool syphon_enabled() { return _syphon_enabled; }
     bool calib_enabled() { return _calib_enabled; };
 
+    string juego_active() 
+    { 
+      return _juego_active; 
+    };
+
     bool juego_active(string name) 
     { 
-      return _juego_active == name; 
+      return _juego_active.compare(name) == 0; 
     };
 
     bool pix_ready()
@@ -235,7 +240,7 @@ class MsgClient
       if (data.size() > 1)
       {
         vector<string> d = ofSplitString(data[1], "#");
-        _juego_active = d[0];
+        _juego_active = d2s(d[0]);
       }
     };
 
@@ -334,6 +339,11 @@ class MsgClient
     float d2f(string d)
     {
       return stof(ofSplitString(d, "=")[1]);
+    };
+
+    string d2s(string d)
+    {
+      return ofSplitString(d, "=")[1];
     };
 
     ofVec2f d2vec(string d)

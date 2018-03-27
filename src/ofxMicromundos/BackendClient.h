@@ -86,6 +86,11 @@ class BackendClient
       return msg.bloques();
     };
 
+    string juego_active() 
+    { 
+      return msg.juego_active(); 
+    };
+
     bool juego_active(string name) 
     { 
       return msg.juego_active(name); 

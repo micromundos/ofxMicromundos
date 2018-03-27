@@ -20,5 +20,5 @@ namespace ofxMicromundos {
   ofVec2f projector_position(cv::FileStorage& config);
   cv::FileStorage load_config(string filename);
 
-  bool projector(bool proj, cv::FileStorage& config);
+  void projector(cv::FileStorage& config);
 };

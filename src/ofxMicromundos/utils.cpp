@@ -58,25 +58,12 @@ namespace ofxMicromundos {
     return cfg;
   };
 
-  bool projector(bool proj, cv::FileStorage& config)
+  void projector(cv::FileStorage& config)
   {
-    if (proj)
-    {
-      ofBackground(0); 
-      ofSetWindowShape(config["projector"]["width"], config["projector"]["height"]);
-      ofVec2f proj = projector_position(config);
-      ofSetWindowPosition(proj.x, proj.y);
-      ofSetFullscreen(string(config["projector"]["fullscreen"]).compare("true") == 0);
-    }
-
-    else
-    {
-      ofSetFullscreen(false);
-      ofSetWindowShape(1,1);
-      //ofSetWindowPosition(0,0);
-    };
-
-    return proj;
+    ofSetWindowShape(config["projector"]["width"], config["projector"]["height"]);
+    ofVec2f proj = projector_position(config);
+    ofSetWindowPosition(proj.x, proj.y);
+    ofSetFullscreen(string(config["projector"]["fullscreen"]).compare("true") == 0);
   };
 
 };

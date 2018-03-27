@@ -125,7 +125,7 @@ class WebSockets
       return msg;
     };
 
-    void print_info(float x, float y)
+    void print_connection(float x, float y)
     {
       if (!connected)
       {
