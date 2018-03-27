@@ -65,6 +65,7 @@ class MsgClient
     {
       stringstream msg;
       msg << "metadata= "
+        << "\n"
         << " pixels:" 
           << " dim " << _pix_w << "," << _pix_h 
           << " chan " << _pix_chan 

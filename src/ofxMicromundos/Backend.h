@@ -150,18 +150,18 @@ class Backend
 
     void render_monitor(float x, float y, float w, float h)
     {
-      float _w = w/3;
+      float _h = h/3;
 
-      cam.render(x, y, _w, h);
+      cam.render(x, y, w, _h);
 
       if (cam_pix.isAllocated())
         cam_tex.loadData(cam_pix);
       if (cam_tex.isAllocated())
-        cam_tex.draw(x + _w, y, _w, h);
+        cam_tex.draw(x, y+_h, w, _h);
 
-      chilitags.render(x + _w, y, _w, h);
+      chilitags.render(x, y+_h, w, _h);
 
-      seg.render(x + _w*2, y, _w, h);
+      seg.render(x, y+_h*2, w, _h);
     };
 
     void print_connection(float x, float y)
@@ -172,7 +172,7 @@ class Backend
     void print_metadata(float x, float y)
     {
       stringstream msg;
-      msg << "metadata= ";
+      msg << "metadata= \n";
 
       if (proj_pix.isAllocated())
       {
