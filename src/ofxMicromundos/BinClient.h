@@ -12,6 +12,8 @@ class BinClient
 
     void init(string host, int port)
     {
+      if (port <= 0)
+        return;
       ofxLibwebsockets::ClientOptions opt = ofxLibwebsockets::defaultClientOptions();
       opt.host = host;
       opt.port = port;
