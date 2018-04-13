@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ofMain.h"
-#include "opencv2/opencv.hpp"
+#include "ofxJSON.h"
 
 namespace ofxMicromundos { 
 
@@ -17,8 +17,8 @@ namespace ofxMicromundos {
   string getDataPath(string path);
   void setDataPathRoot();
 
-  ofVec2f projector_position(cv::FileStorage& config);
-  cv::FileStorage load_config(string filename);
+  ofxJSONElement load_config(string filename);
 
-  void projector(cv::FileStorage& config);
+  ofVec2f projector_position(ofxJSONElement& config);
+  void projector(ofxJSONElement& config);
 };

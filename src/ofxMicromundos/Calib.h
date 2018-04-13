@@ -20,7 +20,7 @@ class Calib
         string H_cam_proj_file, 
         string calib_cam_file, 
         int calib_tag_id,
-        cv::FileNode _proj_pts)
+        const Json::Value& pp)
     {
       this->H_cam_proj_file = H_cam_proj_file;
       this->calib_cam_file = calib_cam_file;
@@ -37,13 +37,18 @@ class Calib
       //float cx = w/2;
       //float cy = h/2;
 
-      vector<vector<float>> pp;
-      _proj_pts >> pp;
-      proj_pts.push_back(cv::Point2f( w*pp[0][0], h*pp[0][1] ));
-      proj_pts.push_back(cv::Point2f( w*pp[1][0], h*pp[1][1] ));
+      //vector<vector<float>> pp;
+      //_proj_pts >> pp;
+
+      proj_pts.push_back(cv::Point2f( 
+            w*pp[0][0].asFloat(), h*pp[0][1].asFloat() ));
+      proj_pts.push_back(cv::Point2f( 
+            w*pp[1][0].asFloat(), h*pp[1][1].asFloat() ));
       //XXX clockwise
-      proj_pts.push_back(cv::Point2f( w*pp[3][0], h*pp[3][1] ));
-      proj_pts.push_back(cv::Point2f( w*pp[2][0], h*pp[2][1] ));
+      proj_pts.push_back(cv::Point2f( 
+            w*pp[3][0].asFloat(), h*pp[3][1].asFloat() ));
+      proj_pts.push_back(cv::Point2f( 
+            w*pp[2][0].asFloat(), h*pp[2][1].asFloat() ));
 
       proj_coords.push_back(ofVec2f( -1.,-1. ));
       proj_coords.push_back(ofVec2f(  1.,-1. ));

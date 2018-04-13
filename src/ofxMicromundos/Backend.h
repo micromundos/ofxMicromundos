@@ -29,8 +29,8 @@ class Backend
         string calib_cam_file, 
         float resize_bin,
         int calib_tag_id,
-        cv::FileNode proj_pts,
-        cv::FileNode juegos_config,
+        const Json::Value& proj_pts,
+        const Json::Value& juegos_config,
         int port_bin,
         int port_msg)
     {

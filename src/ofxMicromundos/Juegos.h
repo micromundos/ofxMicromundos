@@ -9,7 +9,7 @@ class Juegos
     Juegos() {};
     ~Juegos() {};
 
-    void init(cv::FileNode juegos_config)
+    void init(const Json::Value& juegos_config)
     {
       this->juegos_config = juegos_config;
       cur = "";
@@ -17,10 +17,10 @@ class Juegos
 
     void update(map<int, Bloque> bloques)
     {
-      for (cv::FileNodeIterator it = juegos_config.begin(); it != juegos_config.end(); it++)
+      vector<string> keys = juegos_config.getMemberNames();
+      for (auto& name : keys)
       {
-        string name = (*it).name();
-        int id = (int)juegos_config[name]["tag_id"];
+        int id = juegos_config[name]["tag_id"].asInt();
         if (bloques.find(id) != bloques.end())
         {
           cur = name;
@@ -41,7 +41,7 @@ class Juegos
 
   private:
 
-    cv::FileNode juegos_config;
+    Json::Value juegos_config;
     string cur;
 };
 

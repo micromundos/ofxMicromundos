@@ -26,9 +26,21 @@ namespace ofxMicromundos {
     ofSetDataPathRoot(getDataPath("../../data"));
   };
 
-  ofVec2f projector_position(cv::FileStorage& config)
+  ofxJSON load_config(string filename)
   {
-    string pos = config["projector"]["position"];
+    ofxJSON json;
+    bool loaded = json.open(filename);
+    if (!loaded)
+    {
+      ofLogError() << "failed to load " << filename;
+      ofExit();
+    }
+    return json;
+  };
+
+  ofVec2f projector_position(ofxJSON& config)
+  {
+    string pos = config["projector"]["position"].asString();
     float x0;
     if (pos == "right")
     {
@@ -36,34 +48,23 @@ namespace ofxMicromundos {
     }
     else if (pos == "left")
     {
-      float w = config["projector"]["width"];
+      float w = config["projector"]["width"].asFloat();
       x0 = -w;
     }
     else if (pos == "center")
     {
       x0 = 0;
     }
-    float x = config["projector"]["x"];
-    return ofVec2f(x0 + x, config["projector"]["y"]);
-  };
+    float x = config["projector"]["x"].asFloat();
+    return ofVec2f(x0 + x, config["projector"]["y"].asFloat());
+  }; 
 
-  cv::FileStorage load_config(string filename)
+  void projector(ofxJSON& config)
   {
-    cv::FileStorage cfg( ofToDataPath(filename, false), cv::FileStorage::READ );
-    if (!cfg.isOpened())
-    {
-      ofLogError() << "failed to load " << filename;
-      ofExit();
-    }
-    return cfg;
-  };
-
-  void projector(cv::FileStorage& config)
-  {
-    ofSetWindowShape(config["projector"]["width"], config["projector"]["height"]);
+    ofSetWindowShape(config["projector"]["width"].asInt(), config["projector"]["height"].asInt());
     ofVec2f proj = projector_position(config);
     ofSetWindowPosition(proj.x, proj.y);
-    ofSetFullscreen(string(config["projector"]["fullscreen"]).compare("true") == 0);
+    ofSetFullscreen(config["projector"]["fullscreen"].asString().compare("true") == 0);
   };
 
 };

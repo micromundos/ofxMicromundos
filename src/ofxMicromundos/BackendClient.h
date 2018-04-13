@@ -19,11 +19,11 @@ class BackendClient
         int port_msg, 
         float proj_w, 
         float proj_h,
-        cv::FileNode _proj_pts)
+        ofxJSON pp)
     {
       this->proj_w = proj_w;
       this->proj_h = proj_h;
-      init_calib_pts(_proj_pts);
+      init_calib_pts(pp);
 
       msg.init(ip, port_msg); 
       bin.init(ip, port_bin);
@@ -108,7 +108,7 @@ class BackendClient
     MsgClient msg;
 
     float proj_w, proj_h;
-    vector<cv::Point2f> proj_pts;
+    vector<ofVec2f> proj_pts;
 
     void render_calib_pts()
     {
@@ -118,24 +118,30 @@ class BackendClient
       float s = 20;
       for (int i = 0; i < proj_pts.size(); i++)
       {
-        cv::Point2f& p = proj_pts[i];
+        ofVec2f& p = proj_pts[i];
         ofDrawLine( p.x, p.y-s, p.x, p.y+s );
         ofDrawLine( p.x-s, p.y, p.x+s, p.y );
       }
       ofPopStyle();
     };
 
-    void init_calib_pts(cv::FileNode _proj_pts)
+    void init_calib_pts(ofxJSON pp)
     {
       float w = proj_w;
       float h = proj_h;
-      vector<vector<float>> pp;
-      _proj_pts >> pp;
-      proj_pts.push_back(cv::Point2f( w*pp[0][0], h*pp[0][1] ));
-      proj_pts.push_back(cv::Point2f( w*pp[1][0], h*pp[1][1] ));
+
+      //vector<vector<float>> pp;
+      //_proj_pts >> pp;
+
+      proj_pts.push_back(ofVec2f( 
+            w*pp[0][0].asFloat(), h*pp[0][1].asFloat() ));
+      proj_pts.push_back(ofVec2f( 
+            w*pp[1][0].asFloat(), h*pp[1][1].asFloat() ));
       //XXX clockwise
-      proj_pts.push_back(cv::Point2f( w*pp[3][0], h*pp[3][1] ));
-      proj_pts.push_back(cv::Point2f( w*pp[2][0], h*pp[2][1] ));
+      proj_pts.push_back(ofVec2f( 
+            w*pp[3][0].asFloat(), h*pp[3][1].asFloat() ));
+      proj_pts.push_back(ofVec2f( 
+            w*pp[2][0].asFloat(), h*pp[2][1].asFloat() ));
     };
 };
 
