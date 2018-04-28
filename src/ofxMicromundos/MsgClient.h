@@ -15,6 +15,10 @@ class MsgClient
     {
       if (port <= 0)
         return;
+
+      vector<string> addr = ofSplitString(host, "//");
+      host = addr.size() == 1 ? addr[0] : addr[1];
+
       ofxLibwebsockets::ClientOptions opt = ofxLibwebsockets::defaultClientOptions();
       opt.host = host;
       opt.port = port;
