@@ -2,7 +2,9 @@
 
 #include "ofxChilitags.h"
 #include "ofxMicromundos/RGB.h"
-#include "ofxMicromundos/WebSockets.h"
+#include "ofxMicromundos/net/ws/MsgServer.h"
+#include "ofxMicromundos/net/ws/BinServer.h"
+#include "ofxMicromundos/net/ws/BlobsServer.h"
 #include "ofxMicromundos/Calib.h"
 #include "ofxMicromundos/Segmentation.h"
 #include "ofxMicromundos/Bloque.h"
@@ -57,7 +59,9 @@ class Backend
       seg.init();
       blobs.init();
 
-      server.init(port_bin, port_msg, port_blobs);
+      msg_server.init(port_msg);
+      bin_server.init(port_bin);
+      blobs_server.init(port_blobs);
 
       juegos.init(juegos_config);
     };
@@ -88,13 +92,12 @@ class Backend
       copy(seg.pixels(), seg_pix);
       calib.transform(seg_pix, proj_pix, proj_w, proj_h);
 
-      //copy(proj_pix, proj_pix_out);
       proj_tex.loadData(proj_pix);
 
       calib.transform(tags, proj_tags, proj_w, proj_h);
       tags_to_bloques(proj_tags, proj_bloques);
 
-      if (server.blobs_connected())
+      if (blobs_server.connected())
         blobs.update(proj_pix);
 
       juegos.update(proj_bloques);
@@ -102,7 +105,7 @@ class Backend
       return true;
     };
 
-    bool send(
+    void send(
         bool message_enabled, 
         bool binary_enabled, 
         bool syphon_enabled,
@@ -110,18 +113,29 @@ class Backend
     {
       if (!_updated) 
         return false;
-      return server.send( 
-          proj_pix, 
-          //proj_pix_out, 
-          proj_bloques, 
-          blobs.get(),
-          message_enabled, 
+
+      ofPixels* out_pix;
+      if (resize_bin != 1.0)
+      {
+        ofxCv::resize(
+            proj_pix, proj_pix_resized, 
+            resize_bin, resize_bin);
+        out_pix = &proj_pix_resized;
+      }
+      else
+        out_pix = &proj_pix;
+
+      msg_server.send(
+          *out_pix,
+          proj_bloques,
+          message_enabled,
           binary_enabled,
           syphon_enabled,
-          blobs_enabled,
-          _calib_enabled, 
-          juegos.active(),
-          resize_bin);
+          _calib_enabled,
+          juegos.active());
+
+      bin_server.send(*out_pix, binary_enabled);
+      blobs_server.send(blobs.get(), blobs_enabled);
     };
 
     bool render_calib(float w, float h)
@@ -174,13 +188,24 @@ class Backend
 
       seg.render(x, y+_h*2, w, _h);
 
-      if (server.blobs_connected())
+      if (blobs_server.connected())
         blobs.render(x, y+_h*2, w, _h);
     };
 
     void print_connection(float x, float y)
     { 
-      server.print_connection(x, y);
+      print_ws_connection(
+          msg_server.server(), 
+          msg_server.connected(), 
+          "msg", x, y);
+      print_ws_connection(
+          bin_server.server(), 
+          bin_server.connected(), 
+          "bin", x, y);
+      print_ws_connection(
+          blobs_server.server(), 
+          blobs_server.connected(), 
+          "blobs", x, y);
     }; 
 
     void print_metadata(float x, float y)
@@ -233,7 +258,7 @@ class Backend
     {
       float lh = 24;
       y += lh/2;
-      string status = !server.blobs_connected() ? "not connected" : ofToString(blobs.get().size()); 
+      string status = !blobs_server.connected() ? "not connected" : ofToString(blobs.get().size()); 
       ofDrawBitmapStringHighlight("blobs: "+status, x, y, ofColor::yellow, ofColor::black);
     };
 
@@ -247,17 +272,18 @@ class Backend
       cam_pix.clear();
       cam_tex.clear();
       proj_pix.clear();
-      //proj_pix_out.clear();
+      proj_pix_resized.clear();
       proj_tex.clear(); 
       proj_tags.clear();
       proj_bloques.clear();
-      server.dispose();
+      msg_server.dispose();
+      bin_server.dispose();
+      blobs_server.dispose();
     };
 
     ofPixels& projected_pixels()
     {
       return proj_pix;
-      //return proj_pix_out;
     };
 
     ofTexture& projected_texture()
@@ -283,7 +309,9 @@ class Backend
     bool _updated;
 
     RGB cam;
-    WebSockets server;
+    MsgServer msg_server;
+    BinServer bin_server;
+    BlobsServer blobs_server;
     Calib calib;
     Segmentation seg;
     Blobs blobs;
@@ -294,7 +322,7 @@ class Backend
     ofPixels chili_pix;
     ofTexture cam_tex;
     ofPixels proj_pix;
-    //ofPixels proj_pix_out;
+    ofPixels proj_pix_resized;
     ofTexture proj_tex;
 
     vector<ChiliTag> proj_tags;
@@ -367,6 +395,37 @@ class Backend
     void copy(ofPixels& src, ofPixels& dst)
     {
       dst.setFromPixels(src.getData(), src.getWidth(), src.getHeight(), src.getNumChannels());
+    };
+
+    void print_ws_connection(
+        ofxLibwebsockets::Server& server, 
+        bool connected, 
+        string name, 
+        float x, float& y)
+    {
+      float lh = 24; 
+
+      if (!connected)
+      {
+        y += lh;
+        ofDrawBitmapStringHighlight("ws server "+name+" not connected", x, y, ofColor::red, ofColor::black);
+        return;
+      } 
+
+      ofDrawBitmapStringHighlight("ws server "+name+" port: "+ofToString(server.getPort()), x, y, ofColor::green, ofColor::black);
+
+      vector<ofxLibwebsockets::Connection*> conns = server.getConnections();
+      for (int i = 0; i < conns.size(); i++)
+      {
+        ofxLibwebsockets::Connection* conn = conns[i];
+
+        string name = conn->getClientName();
+        string ip = conn->getClientIP();
+        string info = "client "+name+" from ip "+ip;
+
+        y += lh;
+        ofDrawBitmapString(info, x, y);
+      }
     };
 };
 
