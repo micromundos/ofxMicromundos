@@ -4,6 +4,12 @@
 #include "ofxLibwebsockets.h"
 #include "ofxMicromundos/Bloque.h"
 
+//TODO WebSockets
+//move to 
+  //net/ws/MsgServer
+  //net/ws/BinServer
+  //net/ws/BlobsServer
+
 class WebSockets
 {
   public:
@@ -14,7 +20,7 @@ class WebSockets
       dispose();
     };
 
-    void init(int port_bin, int port_msg)
+    void init(int port_bin, int port_msg, int port_blobs)
     {
       ofxLibwebsockets::ServerOptions bin = ofxLibwebsockets::defaultServerOptions();
       bin.port = port_bin;
@@ -22,7 +28,10 @@ class WebSockets
       ofxLibwebsockets::ServerOptions msg = ofxLibwebsockets::defaultServerOptions();
       msg.port = port_msg;
 
-      connected = server_bin.setup(bin) && server_msg.setup(msg); 
+      ofxLibwebsockets::ServerOptions blobs = ofxLibwebsockets::defaultServerOptions();
+      blobs.port = port_blobs;
+
+      connected = server_bin.setup(bin) && server_msg.setup(msg) && server_blobs.setup(blobs); 
     };
 
     void dispose()
@@ -30,19 +39,22 @@ class WebSockets
       out_pix.clear();
       server_bin.exit();
       server_msg.exit();
+      server_blobs.exit();
     };
 
     bool send( 
         ofPixels& pix,
         map<int, Bloque>& bloques, 
+        vector<ofPolyline>& blobs,
         bool message_enabled, 
         bool binary_enabled,
         bool syphon_enabled,
+        bool blobs_enabled,
         bool calib_enabled, 
         string juego_active,
         float resize)
     {
-      if (!message_enabled && !binary_enabled)
+      if (!message_enabled && !binary_enabled && !blobs_enabled)
         return false;
 
       if (!connected)
@@ -62,6 +74,9 @@ class WebSockets
 
       if (binary_enabled)
         server_bin.sendBinary(opix->getData(), opix->getTotalBytes());
+
+      if (blobs_enabled)
+        server_blobs.send(serialize_blobs(blobs));
 
       return true;
     };
@@ -125,6 +140,35 @@ class WebSockets
       return msg;
     };
 
+    //TODO serialize_blobs + deserialize_blobs
+    //blobs:0,0;1,1;2,2#0,0;1,1;2,2
+    string serialize_blobs(vector<ofPolyline>& blobs)
+    {
+      string msg = "";
+      msg += "blobs:";
+
+      int i = 0;
+      for (const auto& blob : blobs)
+      {
+        string blob_sep = i++ > 0 ? "#" : "";
+        msg += blob_sep;
+
+        const vector<ofPoint>& pts = blob.getVertices();
+
+        int j = 0;
+        for (const auto& pt : pts)
+        {
+          string pt_sep = j++ > 0 ? ";" : "";
+
+          msg += pt_sep 
+              + ofToString(pt.x) + "," 
+              + ofToString(pt.y);
+        }
+      }
+
+      return msg;
+    };
+
     void print_connection(float x, float y)
     {
       if (!connected)
@@ -152,6 +196,7 @@ class WebSockets
 
       y += lh; 
 
+
       ofDrawBitmapStringHighlight("websockets server msg port: "+ofToString(server_msg.getPort()), x, y, ofColor::green, ofColor::black);
 
       vector<ofxLibwebsockets::Connection*> conns_msg = server_msg.getConnections();
@@ -166,12 +211,44 @@ class WebSockets
         y += lh;
         ofDrawBitmapString(info, x, y);
       }
+
+
+      ofDrawBitmapStringHighlight("websockets server blobs port: "+ofToString(server_blobs.getPort()), x, y, ofColor::green, ofColor::black);
+
+      vector<ofxLibwebsockets::Connection*> conns_blobs = server_blobs.getConnections();
+      for (int i = 0; i < conns_blobs.size(); i++)
+      {
+        ofxLibwebsockets::Connection* conn = conns_blobs[i];
+
+        string name = conn->getClientName();
+        string ip = conn->getClientIP();
+        string info = "client "+name+" from ip "+ip;
+
+        y += lh;
+        ofDrawBitmapString(info, x, y);
+      }
+    };
+
+    bool bin_connected()
+    {
+      return server_bin.getConnections().size() > 0;
+    };
+
+    bool msg_connected()
+    {
+      return server_msg.getConnections().size() > 0;
+    };
+
+    bool blobs_connected()
+    {
+      return server_blobs.getConnections().size() > 0;
     };
 
   private:
 
     ofxLibwebsockets::Server server_msg;
     ofxLibwebsockets::Server server_bin;
+    ofxLibwebsockets::Server server_blobs;
     ofPixels out_pix;
     bool connected;
 };

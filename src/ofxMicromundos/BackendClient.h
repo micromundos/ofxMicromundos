@@ -2,6 +2,14 @@
 
 #include "BinClient.h"
 #include "MsgClient.h"
+#include "BlobsClient.h"
+
+//TODO BackendClient
+//move to 
+  //net/ws/MsgClient
+  //net/ws/BinClient
+  //net/ws/BlobsClient
+//rename projected_xxx to xxx
 
 class BackendClient
 {
@@ -17,6 +25,7 @@ class BackendClient
         string ip, 
         int port_bin, 
         int port_msg, 
+        int port_blobs,
         float proj_w, 
         float proj_h,
         ofxJSON pp)
@@ -25,21 +34,26 @@ class BackendClient
       this->proj_h = proj_h;
       init_calib_pts(pp);
 
-      msg.init(ip, port_msg); 
-      bin.init(ip, port_bin);
+      _msg.init(ip, port_msg); 
+      _bin.init(ip, port_bin);
+      _blobs.init(ip, port_blobs); 
     };
 
     void update()
     {
-      msg.update();
-      if (msg.pix_ready()) 
-        bin.update(msg.pix_width(), msg.pix_height(), msg.pix_chan());
+      _msg.update();
+      if (_msg.pix_ready()) 
+      {
+        _bin.update(_msg.pix_width(), _msg.pix_height(), _msg.pix_chan());
+        _blobs.update();
+      }
     };
 
     void dispose()
     {
-      msg.dispose();
-      bin.dispose();
+      _msg.dispose();
+      _bin.dispose();
+      _blobs.dispose();
     };
 
     bool render_calib(float w, float h)
@@ -51,61 +65,78 @@ class BackendClient
 
     void render_projected_pixels(float w, float h)
     {
-      bin.render(0, 0, w, h);
+      _bin.render(0, 0, w, h);
+    };
+
+    void render_blobs(float x, float y, float w, float h)
+    {
+      ofPushMatrix();
+      ofTranslate(x, y);
+      ofScale(w, h); 
+      for (const auto& blob : _blobs.get())
+        blob.draw();
+      ofPopMatrix();
     };
 
     void print_connection(float x, float y)
     {
       float lh = 24;
-      bin.print_connection(x, y);
-      msg.print_connection(x, y + lh);
+      _bin.print_connection(x, y);
+      _msg.print_connection(x, y + lh);
+      _blobs.print_connection(x, y + lh*2);
     };
 
     void print_metadata(float x, float y)
     {
-      msg.print_metadata(x, y);
+      _msg.print_metadata(x, y);
     };
 
     void print_bloques(float x, float y)
     {
-      msg.print_bloques(x, y);
+      _msg.print_bloques(x, y);
     };
 
     ofPixels& projected_pixels()
     {
-      return bin.pixels();
+      return _bin.pixels();
     };
 
     //ofTexture& projected_texture()
     //{
-      //return bin.texture();
+      //return _bin.texture();
     //};
 
     map<int, Bloque>& projected_bloques()
     {
-      return msg.bloques();
+      return _msg.bloques();
+    };
+
+    vector<ofPolyline>& blobs()
+    {
+      return _blobs.get();
     };
 
     string juego_active() 
     { 
-      return msg.juego_active(); 
+      return _msg.juego_active(); 
     };
 
     bool juego_active(string name) 
     { 
-      return msg.juego_active(name); 
+      return _msg.juego_active(name); 
     };
 
-    bool calib_enabled() { return msg.calib_enabled(); };
-    bool syphon_enabled() { return msg.syphon_enabled(); }; 
-    //int pix_width() { return msg.pix_width(); };
-    //int pix_height() { return msg.pix_height(); };
-    //int pix_ready() { return msg.pix_ready(); }; 
+    bool calib_enabled() { return _msg.calib_enabled(); };
+    bool syphon_enabled() { return _msg.syphon_enabled(); }; 
+    //int pix_width() { return _msg.pix_width(); };
+    //int pix_height() { return _msg.pix_height(); };
+    //int pix_ready() { return _msg.pix_ready(); }; 
 
   private:
 
-    BinClient bin;
-    MsgClient msg;
+    BinClient _bin;
+    MsgClient _msg;
+    BlobsClient _blobs;
 
     float proj_w, proj_h;
     vector<ofVec2f> proj_pts;

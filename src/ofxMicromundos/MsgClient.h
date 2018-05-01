@@ -95,9 +95,9 @@ class MsgClient
       y += lh/2;
       ofDrawBitmapStringHighlight("bloques", x, y);
       y += lh;
-      for (auto& bloque : _bloques)
+      for (const auto& bloque : _bloques)
       {
-        Bloque& b = bloque.second;
+        const Bloque& b = bloque.second;
         stringstream bstr;
         bstr
           << " id " << b.id
@@ -258,7 +258,7 @@ class MsgClient
 
       map<int,bool> cur;
 
-      for (auto& b : bloques_str)
+      for (const auto& b : bloques_str)
       {
         vector<string> bdata = ofSplitString(b, "#");
         if (bdata.size() == 0 || bdata[0].empty())

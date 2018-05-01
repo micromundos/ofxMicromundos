@@ -7,8 +7,11 @@
 #include "ofxMicromundos/Segmentation.h"
 #include "ofxMicromundos/Bloque.h"
 #include "ofxMicromundos/Juegos.h"
+#include "ofxMicromundos/Blobs.h"
 
 //TODO Backend with ofThread
+//TODO Backend dedupe print funcs (MsgClient, etc)
+
 class Backend
 {
   public:
@@ -32,7 +35,8 @@ class Backend
         const Json::Value& proj_pts,
         const Json::Value& juegos_config,
         int port_bin,
-        int port_msg)
+        int port_msg,
+        int port_blobs)
     {
       this->proj_w = proj_w;
       this->proj_h = proj_h;
@@ -51,8 +55,9 @@ class Backend
       cam.init(cam_w, cam_h, cam_device_id);
       chilitags.init(); 
       seg.init();
+      blobs.init();
 
-      server.init(port_bin, port_msg);
+      server.init(port_bin, port_msg, port_blobs);
 
       juegos.init(juegos_config);
     };
@@ -89,6 +94,9 @@ class Backend
       calib.transform(tags, proj_tags, proj_w, proj_h);
       tags_to_bloques(proj_tags, proj_bloques);
 
+      if (server.blobs_connected())
+        blobs.update(proj_pix);
+
       juegos.update(proj_bloques);
 
       return true;
@@ -97,7 +105,8 @@ class Backend
     bool send(
         bool message_enabled, 
         bool binary_enabled, 
-        bool syphon_enabled)
+        bool syphon_enabled,
+        bool blobs_enabled)
     {
       if (!_updated) 
         return false;
@@ -105,9 +114,11 @@ class Backend
           proj_pix, 
           //proj_pix_out, 
           proj_bloques, 
+          blobs.get(),
           message_enabled, 
           binary_enabled,
           syphon_enabled,
+          blobs_enabled,
           _calib_enabled, 
           juegos.active(),
           resize_bin);
@@ -162,6 +173,9 @@ class Backend
       chilitags.render(x, y+_h, w, _h);
 
       seg.render(x, y+_h*2, w, _h);
+
+      if (server.blobs_connected())
+        blobs.render(x, y+_h*2, w, _h);
     };
 
     void print_connection(float x, float y)
@@ -171,12 +185,12 @@ class Backend
 
     void print_metadata(float x, float y)
     {
-      stringstream msg;
-      msg << "metadata= \n";
+      stringstream status;
+      status << "metadata= \n";
 
       if (proj_pix.isAllocated())
       {
-        msg << " pixels:" 
+        status << " pixels:" 
             << " dim " 
               << proj_pix.getWidth() << "," 
               << proj_pix.getHeight()
@@ -184,14 +198,14 @@ class Backend
           << "\n";
       }
 
-      msg << " calib:" 
+      status << " calib:" 
           << " enabled " << _calib_enabled
         << "\n"
         << " juegos:"
           << " active " << juegos.active();
 
       float lh = 24;
-      ofDrawBitmapStringHighlight(msg.str(), x, y+lh/2);
+      ofDrawBitmapStringHighlight(status.str(), x, y+lh/2);
     };
 
     void print_bloques(float x, float y)
@@ -200,26 +214,35 @@ class Backend
       y += lh/2;
       ofDrawBitmapStringHighlight("bloques", x, y, ofColor::yellow, ofColor::black);
       y += lh;
-      for (auto& bloque : proj_bloques)
+      for (const auto& bloque : proj_bloques)
       {
-        Bloque& b = bloque.second;
-        stringstream bstr;
-        bstr
+        const Bloque& b = bloque.second;
+        stringstream status;
+        status
           << " id " << b.id
           << " loc " << b.loc;
           //<< " dir " << b.dir
           //<< " radio " << b.radio
           //<< " angle " << b.angle;
-        ofDrawBitmapStringHighlight(bstr.str(), x, y, ofColor::yellow, ofColor::black);
+        ofDrawBitmapStringHighlight(status.str(), x, y, ofColor::yellow, ofColor::black);
         y += lh;
       }
     }; 
+
+    void print_blobs(float x, float y)
+    {
+      float lh = 24;
+      y += lh/2;
+      string status = !server.blobs_connected() ? "not connected" : ofToString(blobs.get().size()); 
+      ofDrawBitmapStringHighlight("blobs: "+status, x, y, ofColor::yellow, ofColor::black);
+    };
 
     void dispose()
     {
       cam.dispose();
       calib.dispose();
       seg.dispose();
+      blobs.dispose();
       chili_pix.clear();
       cam_pix.clear();
       cam_tex.clear();
@@ -263,6 +286,7 @@ class Backend
     WebSockets server;
     Calib calib;
     Segmentation seg;
+    Blobs blobs;
     ofxChilitags chilitags;
     Juegos juegos;
 

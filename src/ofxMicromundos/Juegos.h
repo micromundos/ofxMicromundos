@@ -18,7 +18,7 @@ class Juegos
     void update(map<int, Bloque> bloques)
     {
       vector<string> keys = juegos_config.getMemberNames();
-      for (auto& name : keys)
+      for (const auto& name : keys)
       {
         int id = juegos_config[name]["tag_id"].asInt();
         if (bloques.find(id) != bloques.end())
