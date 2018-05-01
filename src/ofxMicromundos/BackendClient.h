@@ -101,10 +101,10 @@ class BackendClient
       return _bin.pixels();
     };
 
-    //ofTexture& projected_texture()
-    //{
-      //return _bin.texture();
-    //};
+    ofTexture& projected_texture()
+    {
+      return _bin.texture();
+    };
 
     map<int, Bloque>& projected_bloques()
     {
