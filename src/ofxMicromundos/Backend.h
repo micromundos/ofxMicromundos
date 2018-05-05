@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ofxTimeMeasurements.h"
 #include "ofxChilitags.h"
 #include "ofxMicromundos/RGB.h"
 #include "ofxMicromundos/net/ws/MsgServer.h"
@@ -68,16 +69,26 @@ class Backend
 
     bool update()
     {
+      TS_START("cam");
       _updated = cam.update();
+      TS_STOP("cam");
 
       if (!_updated)
         return false;
 
       cam_pix = cam.pixels();
+      TS_START("undistort");
       calib.undistort(cam_pix);
+      TS_STOP("undistort");
 
+      TS_START("chilitags_copy");
       copy(cam_pix, chili_pix);
+      TS_STOP("chilitags_copy");
+
+      TS_START("chilitags");
       chilitags.update(chili_pix);
+      TS_STOP("chilitags");
+
       vector<ChiliTag>& tags = chilitags.tags();
 
       _calib_enabled = calib.enabled(tags);
@@ -86,19 +97,34 @@ class Backend
 
       //ofPixels seg_pix_in;
       //ofxCv::resize(cam_pix, seg_pix_in, resize_bin, resize_bin);
+      TS_START("segmentation");
       seg.update(cam_pix, tags); 
+      TS_STOP("segmentation");
 
       ofPixels seg_pix;
+
+      TS_START("segmentation_copy");
       copy(seg.pixels(), seg_pix);
+      TS_STOP("segmentation_copy");
+
+      TS_START("transform_pix");
       calib.transform(seg_pix, proj_pix, proj_w, proj_h);
+      TS_STOP("transform_pix");
 
       proj_tex.loadData(proj_pix);
 
+      TS_START("transform_tags");
       calib.transform(tags, proj_tags, proj_w, proj_h);
-      tags_to_bloques(proj_tags, proj_bloques);
+      TS_STOP("transform_tags");
 
+      TS_START("tags_to_bloques");
+      tags_to_bloques(proj_tags, proj_bloques);
+      TS_STOP("tags_to_bloques");
+
+      TS_START("blobs");
       if (blobs_server.connected())
         blobs.update(proj_pix);
+      TS_STOP("blobs");
 
       juegos.update(proj_bloques);
 
@@ -115,6 +141,7 @@ class Backend
         return false;
 
       ofPixels* out_pix;
+      TS_START("resize_to_send");
       if (resize_bin != 1.0)
       {
         ofxCv::resize(
@@ -124,7 +151,9 @@ class Backend
       }
       else
         out_pix = &proj_pix;
+      TS_STOP("resize_to_send");
 
+      TS_START("send_msg");
       msg_server.send(
           *out_pix,
           proj_bloques,
@@ -133,9 +162,15 @@ class Backend
           syphon_enabled,
           _calib_enabled,
           juegos.active());
+      TS_STOP("send_msg");
 
+      TS_START("send_bin");
       bin_server.send(*out_pix, binary_enabled);
+      TS_STOP("send_bin");
+
+      TS_START("send_blobs");
       blobs_server.send(blobs.get(), blobs_enabled);
+      TS_STOP("send_blobs");
     };
 
     bool render_calib(float w, float h)

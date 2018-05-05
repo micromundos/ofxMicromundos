@@ -28,6 +28,7 @@ class Calib
 
       UP = ofVec2f(0,1);
       H_ready = false;
+      H_maps_ready = false;
 
       calib_tags.resize(4);
       for (int i = 0; i < calib_tags.size(); i++)
@@ -89,6 +90,7 @@ class Calib
           cv::Mat(tags_pts), 
           cv::Mat(proj_pts));
       H_ready = true; 
+      H_maps_ready = false;
 
       save_H();
     }; 
@@ -105,11 +107,19 @@ class Calib
     {
       if (!H_ready)
         return;
+
       float sw = src.getWidth();
       float sh = src.getHeight(); 
       ofPixels src2;
+
+      TS_START("transform_pix_resize");
       ofxCv::resize(src, src2, w/sw, h/sh);
+      TS_STOP("transform_pix_resize");
+
+      TS_START("transform_pix_imitate");
       ofxCv::imitate(dst, src2);
+      TS_STOP("transform_pix_imitate");
+
       transform_pix(src2, dst);
     }; 
 
@@ -151,6 +161,9 @@ class Calib
 
     cv::Mat H_cv;
     bool H_ready;
+
+    cv::Mat H_map_x, H_map_y;
+    bool H_maps_ready;
 
     ofxCv::Calibration cam_calib;
 
@@ -215,11 +228,67 @@ class Calib
 
     void transform_pix(ofPixels& src, ofPixels& dst)
     {
-      cv::Mat srcMat = toCv(src);
-      cv::Mat dstMat = toCv(dst);
-      cv::warpPerspective(srcMat, dstMat, H_cv, srcMat.size(), cv::INTER_LINEAR);
-      //toOf(dstMat, dst); //Segmentation fault RPI
+      cv::Mat src_mat = toCv(src);
+      cv::Mat dst_mat = toCv(dst);
+
+      TS_START("transform_pix_calc_maps"); 
+      if (!H_maps_ready)
+      {
+        perspective_to_maps(H_cv, src_mat.size(), H_map_x, H_map_y);
+        H_maps_ready = true;
+      }
+      TS_STOP("transform_pix_calc_maps"); 
+
+      TS_START("transform_pix_warp"); 
+      cv::remap(src_mat, dst_mat, H_map_x, H_map_y, CV_INTER_LINEAR);
+      TS_STOP("transform_pix_warp");
+
+      //TS_START("transform_pix_warp");
+      //cv::warpPerspective(src_mat, dst_mat, H_cv, src_mat.size(), cv::INTER_LINEAR);
+      //TS_STOP("transform_pix_warp");
+
+      //toOf(dst_mat, dst); //Segmentation fault RPI
     };
+
+    /*
+     * http://www.smallbulb.net/2013/351-opencv-convert-projection-matrix-to-maps
+     *
+     * alternative:
+     * http://romsteady.blogspot.com.ar/2015/07/calculate-opencv-warpperspective-map.html
+     */
+    void perspective_to_maps(const cv::Mat &perspective_mat, const cv::Size &img_size, cv::Mat &map1, cv::Mat &map2)
+    {
+
+      // invert the matrix because the transformation maps must be
+      // bird's view -> original
+      cv::Mat inv_perspective(perspective_mat.inv());
+      inv_perspective.convertTo(inv_perspective, CV_32FC1);
+
+      // create XY 2D array
+      // (((0, 0), (1, 0), (2, 0), ...),
+      //  ((0, 1), (1, 1), (2, 1), ...),
+      // ...)
+      cv::Mat xy(img_size, CV_32FC2);
+      float *pxy = (float*)xy.data;
+      for (int y = 0; y < img_size.height; y++)
+        for (int x = 0; x < img_size.width; x++)
+        {
+          *pxy++ = x;
+          *pxy++ = y;
+        }
+
+      // perspective transformation of the points
+      cv::Mat xy_transformed;
+      cv::perspectiveTransform(xy, xy_transformed, inv_perspective);
+
+      // split x/y to extra maps
+      assert(xy_transformed.channels() == 2);
+      cv::Mat maps[2]; // map_x, map_y
+      cv::split(xy_transformed, maps);
+
+      // remap() with integer maps is faster
+      cv::convertMaps(maps[0], maps[1], map1, map2, CV_16SC2);
+    }
 
     void transform_pix(ofPixels& pix)
     {
@@ -333,6 +402,7 @@ class Calib
         return false;
       fs["homography"] >> H_cv;
       H_ready = true;
+      H_maps_ready = false;
       return true;
     }; 
 
