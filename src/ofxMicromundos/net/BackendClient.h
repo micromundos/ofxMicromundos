@@ -1,13 +1,9 @@
 #pragma once
 
-#include "BinClient.h"
-#include "MsgClient.h"
-#include "BlobsClient.h"
+#include "ofxMicromundos/net/ws/BinClient.h"
+#include "ofxMicromundos/net/ws/MsgClient.h"
+#include "ofxMicromundos/net/ws/BlobsClient.h"
 
-//TODO move BackendClient to net/ws/
-  //net/ws/MsgClient
-  //net/ws/BinClient
-  //net/ws/BlobsClient
 //TODO BackendClient rename projected_xxx to xxx
 //TODO BackendClient hardcode proj_pts/ofxJSON pp
 
