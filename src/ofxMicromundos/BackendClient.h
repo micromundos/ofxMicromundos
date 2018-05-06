@@ -4,12 +4,12 @@
 #include "MsgClient.h"
 #include "BlobsClient.h"
 
-//TODO BackendClient
-//move to 
+//TODO move BackendClient to net/ws/
   //net/ws/MsgClient
   //net/ws/BinClient
   //net/ws/BlobsClient
-//rename projected_xxx to xxx
+//TODO BackendClient rename projected_xxx to xxx
+//TODO BackendClient hardcode proj_pts/ofxJSON pp
 
 class BackendClient
 {

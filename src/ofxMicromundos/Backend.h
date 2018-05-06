@@ -14,6 +14,7 @@
 
 //TODO Backend with ofThread
 //TODO Backend dedupe print funcs (MsgClient, etc)
+//TODO Backend calib remove/hardcode proj_pts/ofxJSON pp
 
 class Backend
 {

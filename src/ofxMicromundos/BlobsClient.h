@@ -22,7 +22,7 @@ class BlobsClient
       opt.host = host;
       opt.port = port;
       opt.reconnect = true;
-      opt.reconnectInterval = 3000;
+      opt.reconnectInterval = 5000;
       client.connect(opt);
       //client.connect(host, port);
       client.addListener(this);
