@@ -14,7 +14,6 @@
 
 //TODO Backend with ofThread
 //TODO Backend dedupe print funcs (MsgClient, etc)
-//TODO Backend calib remove/hardcode proj_pts/ofxJSON pp
 
 class Backend
 {
@@ -36,7 +35,6 @@ class Backend
         string calib_cam_file, 
         float resize_bin,
         int calib_tag_id,
-        const Json::Value& proj_pts,
         const Json::Value& juegos_config,
         int port_bin,
         int port_msg,
@@ -53,8 +51,7 @@ class Backend
           proj_w, proj_h, 
           calib_H_cam_proj_file, 
           calib_cam_file, 
-          calib_tag_id,
-          proj_pts);
+          calib_tag_id);
 
       cam.init(cam_w, cam_h, cam_device_id);
       chilitags.init(); 

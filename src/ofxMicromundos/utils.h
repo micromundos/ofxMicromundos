@@ -21,4 +21,6 @@ namespace ofxMicromundos {
 
   ofVec2f projector_position(ofxJSONElement& config);
   void projector(ofxJSONElement& config);
+
+  vector<ofVec2f> calib_points(float proj_w, float proj_h);
 };

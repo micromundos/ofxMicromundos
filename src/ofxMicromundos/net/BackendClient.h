@@ -1,11 +1,11 @@
 #pragma once
 
+#include "ofxMicromundos/utils.h"
 #include "ofxMicromundos/net/ws/BinClient.h"
 #include "ofxMicromundos/net/ws/MsgClient.h"
 #include "ofxMicromundos/net/ws/BlobsClient.h"
 
 //TODO BackendClient rename projected_xxx to xxx
-//TODO BackendClient hardcode proj_pts/ofxJSON pp
 
 class BackendClient
 {
@@ -23,13 +23,9 @@ class BackendClient
         int port_msg, 
         int port_blobs,
         float proj_w, 
-        float proj_h,
-        ofxJSON pp)
+        float proj_h)
     {
-      this->proj_w = proj_w;
-      this->proj_h = proj_h;
-      init_calib_pts(pp);
-
+      proj_pts = ofxMicromundos::calib_points(proj_w, proj_h);
       _msg.init(ip, port_msg); 
       _bin.init(ip, port_bin);
       _blobs.init(ip, port_blobs); 
@@ -133,8 +129,6 @@ class BackendClient
     BinClient _bin;
     MsgClient _msg;
     BlobsClient _blobs;
-
-    float proj_w, proj_h;
     vector<ofVec2f> proj_pts;
 
     void render_calib_pts()
@@ -152,23 +146,5 @@ class BackendClient
       ofPopStyle();
     };
 
-    void init_calib_pts(ofxJSON pp)
-    {
-      float w = proj_w;
-      float h = proj_h;
-
-      //vector<vector<float>> pp;
-      //_proj_pts >> pp;
-
-      proj_pts.push_back(ofVec2f( 
-            w*pp[0][0].asFloat(), h*pp[0][1].asFloat() ));
-      proj_pts.push_back(ofVec2f( 
-            w*pp[1][0].asFloat(), h*pp[1][1].asFloat() ));
-      //XXX clockwise
-      proj_pts.push_back(ofVec2f( 
-            w*pp[3][0].asFloat(), h*pp[3][1].asFloat() ));
-      proj_pts.push_back(ofVec2f( 
-            w*pp[2][0].asFloat(), h*pp[2][1].asFloat() ));
-    };
 };
 
