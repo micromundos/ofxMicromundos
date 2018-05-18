@@ -2,8 +2,9 @@
 
 #include "ofxCv.h"
 #include "ofxChilitags.h"
+#include "Poco/Condition.h"
 
-class Segmentation
+class Segmentation : public ofThread
 {
   public:
 
@@ -13,22 +14,34 @@ class Segmentation
       dispose();
     };
 
-    void init() {};
+    void init(float w, float h, bool threaded = true) 
+    {
+      this->threaded = threaded;
+      bin_pix.allocate(w, h, 1);
+      if (threaded) 
+        startThread();
+    };
 
     void update(ofPixels& pix, vector<ChiliTag>& tags)
     {
-      ofxCv::copyGray(pix, bin_mat);
-      ofxCv::autothreshold(bin_mat, false);
-      fillTags(tags, bin_mat);
-
-      //open
-      ofxCv::erode(bin_mat, 2);
-      ofxCv::dilate(bin_mat, 2);
-      //close
-      ofxCv::dilate(bin_mat, 2);
-      ofxCv::erode(bin_mat, 4);
-
-      ofxCv::toOf(bin_mat, bin_pix); 
+      if (threaded)
+      {
+        lock();
+        front_pix = pix;
+        front_tags = tags;
+        new_data = true;
+        if (segmented)
+        {
+          swap(bin_pix, intra_pix);
+          segmented = false;
+        }
+        condition.signal();
+        unlock();
+      }
+      else
+      {
+        segment(pix, tags);
+      }
     };
 
     void render(float x, float y, float w, float h)
@@ -52,9 +65,64 @@ class Segmentation
 
   private:
 
-    cv::Mat bin_mat;
     ofPixels bin_pix;
     ofTexture bin_tex;
+
+    bool threaded, new_data, segmented;
+    ofPixels back_pix, front_pix, intra_pix;
+    vector<ChiliTag> back_tags, front_tags;
+    Poco::Condition condition;
+
+    void threadedFunction()
+    {
+      while (isThreadRunning())
+      {
+        lock();
+        if (!new_data)
+          condition.wait(mutex);
+        bool run_segmentation = false;
+        if (new_data)
+        {
+          swap(front_pix, back_pix);
+          swap(front_tags, back_tags);
+          run_segmentation = true;
+          new_data = false;
+        }
+        unlock();
+        if (run_segmentation)
+          segment(back_pix, back_tags);
+      }
+    };
+
+    void segment(ofPixels& pix, vector<ChiliTag>& tags)
+    {
+      cv::Mat bin_mat;
+      ofxCv::copyGray(pix, bin_mat);
+      ofxCv::autothreshold(bin_mat, false);
+      fillTags(tags, bin_mat);
+
+      //open
+      ofxCv::erode(bin_mat, 2);
+      ofxCv::dilate(bin_mat, 2);
+      //close
+      ofxCv::dilate(bin_mat, 2);
+      ofxCv::erode(bin_mat, 4);
+
+      //ofxCv::toOf(bin_mat, bin_pix); 
+      ofxCv::toOf(bin_mat, back_pix); 
+
+      if (threaded)
+      {
+        lock();
+        swap(back_pix, intra_pix);
+        segmented = true;
+        unlock();
+      }
+      else
+      {
+        swap(back_pix, bin_pix);
+      }
+    };
 
     //based on ofxCv::fillPoly(points, dst);
     void fillTags(vector<ChiliTag>& tags, cv::Mat dstMat)

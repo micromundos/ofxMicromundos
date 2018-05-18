@@ -47,7 +47,9 @@ class Backend
       this->resize_bin = resize_bin;
 
       _calib_enabled = false;
-      _updated = false;
+      cam_updated = false;
+
+      proj_pix.allocate(proj_w, proj_h, 1);
 
       calib.init(
           proj_w, proj_h, 
@@ -58,7 +60,7 @@ class Backend
 
       cam.init(cam_w, cam_h, cam_device_id);
       chilitags.init(); 
-      seg.init();
+      seg.init(cam_w, cam_h, false); //TODO segmentation thread
       blobs.init();
 
       msg_server.init(port_msg);
@@ -71,10 +73,10 @@ class Backend
     bool update()
     {
       TS_START("cam");
-      _updated = cam.update();
+      cam_updated = cam.update();
       TS_STOP("cam");
 
-      if (!_updated)
+      if (!cam_updated)
         return false;
 
       cam_pix = cam.pixels();
@@ -103,7 +105,6 @@ class Backend
       TS_STOP("segmentation");
 
       ofPixels seg_pix;
-
       TS_START("segmentation_copy");
       copy(seg.pixels(), seg_pix);
       TS_STOP("segmentation_copy");
@@ -138,7 +139,7 @@ class Backend
         bool syphon_enabled,
         bool blobs_enabled)
     {
-      if (!_updated) 
+      if (!cam_updated) 
         return false;
 
       ofPixels* out_pix;
@@ -342,7 +343,7 @@ class Backend
     float proj_w, proj_h;
     float resize_bin;
     float _calib_enabled;
-    bool _updated;
+    bool cam_updated;
 
     RGB cam;
     MsgServer msg_server;
