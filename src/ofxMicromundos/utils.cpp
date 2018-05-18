@@ -76,11 +76,11 @@ namespace ofxMicromundos {
 
     vector<ofVec2f> pts;
 
-    pts.push_back(ofVec2f( proj_w * 0.33, proj_w * 0.33 ));
-    pts.push_back(ofVec2f( proj_w * 0.67, proj_w * 0.33 ));
+    pts.push_back(ofVec2f( proj_w * 0.33, proj_h * 0.33 ));
+    pts.push_back(ofVec2f( proj_w * 0.67, proj_h * 0.33 ));
     //XXX clockwise
-    pts.push_back(ofVec2f( proj_w * 0.67, proj_w * 0.67 ));
-    pts.push_back(ofVec2f( proj_w * 0.33, proj_w * 0.67 ));
+    pts.push_back(ofVec2f( proj_w * 0.67, proj_h * 0.67 ));
+    pts.push_back(ofVec2f( proj_w * 0.33, proj_h * 0.67 ));
 
     return pts;
   };
