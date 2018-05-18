@@ -2,6 +2,7 @@
 
 #include "ofxCv.h"
 #include "ofxChilitags.h"
+#include "ofxMicromundos/utils.h"
 
 using namespace ofxCv;
 
@@ -16,11 +17,10 @@ class Calib
     };
 
     bool init(
-        float w, float h, 
+        float proj_w, float proj_h, 
         string H_cam_proj_file, 
         string calib_cam_file, 
-        int calib_tag_id,
-        const Json::Value& pp)
+        int calib_tag_id)
     {
       this->H_cam_proj_file = H_cam_proj_file;
       this->calib_cam_file = calib_cam_file;
@@ -35,21 +35,12 @@ class Calib
         calib_tags[i].load("calib/"+ofToString(i+1)+".png");
 
       //float s = 50.;
-      //float cx = w/2;
-      //float cy = h/2;
+      //float cx = proj_w/2;
+      //float cy = proj_h/2;
 
-      //vector<vector<float>> pp;
-      //_proj_pts >> pp;
-
-      proj_pts.push_back(cv::Point2f( 
-            w*pp[0][0].asFloat(), h*pp[0][1].asFloat() ));
-      proj_pts.push_back(cv::Point2f( 
-            w*pp[1][0].asFloat(), h*pp[1][1].asFloat() ));
-      //XXX clockwise
-      proj_pts.push_back(cv::Point2f( 
-            w*pp[3][0].asFloat(), h*pp[3][1].asFloat() ));
-      proj_pts.push_back(cv::Point2f( 
-            w*pp[2][0].asFloat(), h*pp[2][1].asFloat() ));
+      vector<ofVec2f> _proj_pts = ofxMicromundos::calib_points(proj_w, proj_h);
+      for (const auto& pt : _proj_pts)
+        proj_pts.push_back(cv::Point2f(pt.x, pt.y)); 
 
       proj_coords.push_back(ofVec2f( -1.,-1. ));
       proj_coords.push_back(ofVec2f(  1.,-1. ));
