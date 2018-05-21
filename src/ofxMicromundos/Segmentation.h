@@ -2,6 +2,7 @@
 
 #include "ofxCv.h"
 #include "ofxChilitags.h"
+#include "ofxMicromundos/utils.h"
 #include "Poco/Condition.h"
 
 class Segmentation : public ofThread
@@ -17,7 +18,9 @@ class Segmentation : public ofThread
     void init(float w, float h, bool threaded = true) 
     {
       this->threaded = threaded;
-      bin_pix.allocate(w, h, 1);
+      out_pix.allocate(w, h, 1);
+      out_pix_render.allocate(w, h, 1);
+      intra_pix_back.allocate(w, h, 1);
       if (threaded) 
         startThread();
     };
@@ -32,7 +35,8 @@ class Segmentation : public ofThread
         new_data = true;
         if (segmented)
         {
-          swap(bin_pix, intra_pix);
+          swap(out_pix, intra_pix);
+          update_tex();
           segmented = false;
         }
         condition.signal();
@@ -40,36 +44,41 @@ class Segmentation : public ofThread
       }
       else
       {
-        segment(pix, tags);
+        segment(pix, tags, out_pix);
+        update_tex();
       }
     };
 
     void render(float x, float y, float w, float h)
     {
-      if (bin_pix.isAllocated())
-        bin_tex.loadData(bin_pix);
-      if (bin_tex.isAllocated())
-        bin_tex.draw(x, y, w, h);
+      if (out_tex.isAllocated())
+        out_tex.draw(x, y, w, h);
     };
 
     void dispose()
     {
-      bin_pix.clear();
-      bin_tex.clear();
+      out_pix.clear();
+      out_pix_render.clear();
+      out_tex.clear();
+      back_pix.clear();
+      front_pix.clear();
+      intra_pix.clear();
+      intra_pix_back.clear();
     };
 
     ofPixels& pixels()
     {
-      return bin_pix;
+      return out_pix;
     };
 
   private:
 
-    ofPixels bin_pix;
-    ofTexture bin_tex;
+    ofPixels out_pix;
+    ofPixels out_pix_render;
+    ofTexture out_tex;
 
     bool threaded, new_data, segmented;
-    ofPixels back_pix, front_pix, intra_pix;
+    ofPixels back_pix, front_pix, intra_pix, intra_pix_back;
     vector<ChiliTag> back_tags, front_tags;
     Poco::Condition condition;
 
@@ -90,11 +99,17 @@ class Segmentation : public ofThread
         }
         unlock();
         if (run_segmentation)
-          segment(back_pix, back_tags);
+        {
+          segment(back_pix, back_tags, intra_pix_back);
+          lock();
+          swap(intra_pix_back, intra_pix);
+          segmented = true;
+          unlock();
+        }
       }
     };
 
-    void segment(ofPixels& pix, vector<ChiliTag>& tags)
+    void segment(ofPixels& pix, vector<ChiliTag>& tags, ofPixels& dst)
     {
       cv::Mat bin_mat;
       ofxCv::copyGray(pix, bin_mat);
@@ -108,20 +123,13 @@ class Segmentation : public ofThread
       ofxCv::dilate(bin_mat, 2);
       ofxCv::erode(bin_mat, 4);
 
-      //ofxCv::toOf(bin_mat, bin_pix); 
-      ofxCv::toOf(bin_mat, back_pix); 
+      ofxCv::toOf(bin_mat, dst); 
+    };
 
-      if (threaded)
-      {
-        lock();
-        swap(back_pix, intra_pix);
-        segmented = true;
-        unlock();
-      }
-      else
-      {
-        swap(back_pix, bin_pix);
-      }
+    void update_tex()
+    {
+      ofxMicromundos::copy_pix(out_pix, out_pix_render);
+      out_tex.loadData(out_pix_render);
     };
 
     //based on ofxCv::fillPoly(points, dst);

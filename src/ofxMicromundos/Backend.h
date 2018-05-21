@@ -11,6 +11,7 @@
 #include "ofxMicromundos/Bloque.h"
 #include "ofxMicromundos/Juegos.h"
 #include "ofxMicromundos/Blobs.h"
+#include "ofxMicromundos/utils.h"
 
 //TODO Backend with ofThread
 //TODO Backend dedupe print funcs (MsgClient, etc)
@@ -47,7 +48,8 @@ class Backend
       _calib_enabled = false;
       cam_updated = false;
 
-      proj_pix.allocate(proj_w, proj_h, 1);
+      pix.allocate(proj_w, proj_h, 1);
+      //pix_out.allocate(proj_w, proj_h, 1);
 
       calib.init(
           proj_w, proj_h, 
@@ -82,7 +84,7 @@ class Backend
       TS_STOP("undistort");
 
       TS_START("chilitags_copy");
-      copy(cam_pix, chili_pix);
+      ofxMicromundos::copy_pix(cam_pix, chili_pix);
       TS_STOP("chilitags_copy");
 
       TS_START("chilitags");
@@ -101,16 +103,19 @@ class Backend
       seg.update(cam_pix, tags); 
       TS_STOP("segmentation");
 
-      ofPixels seg_pix;
-      TS_START("segmentation_copy");
-      copy(seg.pixels(), seg_pix);
-      TS_STOP("segmentation_copy");
+      //ofPixels seg_pix;
+      //TS_START("segmentation_copy");
+      //ofxMicromundos::copy_pix(seg.pixels(), seg_pix);
+      //TS_STOP("segmentation_copy");
 
       TS_START("transform_pix");
-      calib.transform(seg_pix, proj_pix, proj_w, proj_h);
+      //calib.transform(seg_pix, pix, proj_w, proj_h);
+      calib.transform(seg.pixels(), pix, proj_w, proj_h);
       TS_STOP("transform_pix");
 
-      proj_tex.loadData(proj_pix);
+      //ofxMicromundos::copy_pix(pix, pix_out);
+      //tex_out.loadData(pix_out);
+      tex_out.loadData(pix);
 
       TS_START("transform_tags");
       calib.transform(tags, proj_tags, proj_w, proj_h);
@@ -122,7 +127,7 @@ class Backend
 
       TS_START("blobs");
       if (blobs_server.connected())
-        blobs.update(proj_pix);
+        blobs.update(pix);
       TS_STOP("blobs");
 
       juegos.update(proj_bloques);
@@ -144,12 +149,12 @@ class Backend
       if (resize_bin != 1.0)
       {
         ofxCv::resize(
-            proj_pix, proj_pix_resized, 
+            pix, pix_resized, 
             resize_bin, resize_bin);
-        out_pix = &proj_pix_resized;
+        out_pix = &pix_resized;
       }
       else
-        out_pix = &proj_pix;
+        out_pix = &pix;
       TS_STOP("resize_to_send");
 
       TS_START("send_msg");
@@ -177,18 +182,12 @@ class Backend
       if (_calib_enabled)
       {
         calib.render();
-        render_projected_tags();
+        render_tags();
       }
       return _calib_enabled;
     };
 
-    void render_projected_pixels(float w, float h)
-    {  
-      if (proj_tex.isAllocated())
-        proj_tex.draw(0, 0, w, h);
-    };
-
-    void render_projected_tags()
+    void render_tags()
     {
       ofPushStyle();
       ofSetColor(ofColor::orange);
@@ -247,13 +246,13 @@ class Backend
       stringstream status;
       status << "metadata= \n";
 
-      if (proj_pix.isAllocated())
+      if (pix.isAllocated())
       {
         status << " pixels:" 
             << " dim " 
-              << proj_pix.getWidth() << "," 
-              << proj_pix.getHeight()
-            << " chan " << proj_pix.getNumChannels()
+              << pix.getWidth() << "," 
+              << pix.getHeight()
+            << " chan " << pix.getNumChannels()
           << "\n";
       }
 
@@ -305,9 +304,10 @@ class Backend
       chili_pix.clear();
       cam_pix.clear();
       cam_tex.clear();
-      proj_pix.clear();
-      proj_pix_resized.clear();
-      proj_tex.clear(); 
+      pix.clear();
+      pix_resized.clear();
+      tex_out.clear();
+      //pix_out.clear();
       proj_tags.clear();
       proj_bloques.clear();
       msg_server.dispose();
@@ -315,20 +315,20 @@ class Backend
       blobs_server.dispose();
     };
 
-    ofPixels& projected_pixels()
+    //ofPixels& pixels()
+    //{
+      //return pix_out;
+    //};
+
+    ofTexture& texture()
     {
-      return proj_pix;
+      return tex_out;
     };
 
-    ofTexture& projected_texture()
-    {
-      return proj_tex;
-    };
-
-    map<int, Bloque>& projected_bloques()
-    {
-      return proj_bloques;
-    };
+    //map<int, Bloque>& bloques()
+    //{
+      //return proj_bloques;
+    //};
 
     bool calib_enabled()
     {
@@ -354,10 +354,10 @@ class Backend
 
     ofPixels cam_pix;
     ofPixels chili_pix;
+    ofPixels pix, pix_resized;
     ofTexture cam_tex;
-    ofPixels proj_pix;
-    ofPixels proj_pix_resized;
-    ofTexture proj_tex;
+    ofTexture tex_out;
+    //ofPixels pix_out;
 
     vector<ChiliTag> proj_tags;
     map<int, Bloque> proj_bloques; 
@@ -424,12 +424,7 @@ class Backend
       b.loc_i += (t.center_n - b.loc_i) * 0.2;
       b.dir_i += (t.dir - b.dir_i) * 0.2;
       b.angle_i = ofLerpRadians(b.angle_i, t.angle, 0.05);
-    };
-
-    void copy(ofPixels& src, ofPixels& dst)
-    {
-      dst.setFromPixels(src.getData(), src.getWidth(), src.getHeight(), src.getNumChannels());
-    };
+    }; 
 
     void print_ws_connection(
         ofxLibwebsockets::Server& server, 

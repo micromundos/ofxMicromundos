@@ -107,9 +107,10 @@ class Calib
       ofxCv::resize(src, src2, w/sw, h/sh);
       TS_STOP("transform_pix_resize");
 
-      TS_START("transform_pix_imitate");
-      ofxCv::imitate(dst, src2);
-      TS_STOP("transform_pix_imitate");
+      //TS_START("transform_pix_imitate");
+      //delegate dst allocation
+      //ofxCv::imitate(dst, src2);
+      //TS_STOP("transform_pix_imitate");
 
       transform_pix(src2, dst);
     }; 

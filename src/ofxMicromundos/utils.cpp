@@ -85,4 +85,9 @@ namespace ofxMicromundos {
     return pts;
   };
 
+  void copy_pix(ofPixels& src, ofPixels& dst)
+  {
+    dst.setFromPixels(src.getData(), src.getWidth(), src.getHeight(), src.getNumChannels());
+  };
+
 };
