@@ -49,7 +49,6 @@ class Backend
       cam_updated = false;
 
       pix.allocate(proj_w, proj_h, 1);
-      //pix_out.allocate(proj_w, proj_h, 1);
 
       calib.init(
           proj_w, proj_h, 
@@ -97,24 +96,21 @@ class Backend
       if (_calib_enabled)
         calib.calibrate(tags, proj_w, proj_h);
 
-      //ofPixels seg_pix_in;
-      //ofxCv::resize(cam_pix, seg_pix_in, resize_bin, resize_bin);
+      TS_START("segmentation_resize");
+      ofxCv::resize(cam_pix, seg_pix, proj_w/cam.width(), proj_h/cam.height());
+      TS_STOP("segmentation_resize");
+
       TS_START("segmentation");
-      seg.update(cam_pix, tags); 
+      seg.update(seg_pix, tags); 
+      //seg.update(cam_pix, tags); 
+      //seg.update(cam_pix, tags, proj_w, proj_h); 
       TS_STOP("segmentation");
 
-      //ofPixels seg_pix;
-      //TS_START("segmentation_copy");
-      //ofxMicromundos::copy_pix(seg.pixels(), seg_pix);
-      //TS_STOP("segmentation_copy");
-
       TS_START("transform_pix");
-      //calib.transform(seg_pix, pix, proj_w, proj_h);
-      calib.transform(seg.pixels(), pix, proj_w, proj_h);
+      calib.transform(seg.pixels(), pix);
+      //calib.transform(seg.pixels(), pix, proj_w, proj_h);
       TS_STOP("transform_pix");
 
-      //ofxMicromundos::copy_pix(pix, pix_out);
-      //tex_out.loadData(pix_out);
       tex_out.loadData(pix);
 
       TS_START("transform_tags");
@@ -301,24 +297,19 @@ class Backend
       calib.dispose();
       seg.dispose();
       blobs.dispose();
-      chili_pix.clear();
       cam_pix.clear();
       cam_tex.clear();
       pix.clear();
       pix_resized.clear();
+      seg_pix.clear();
+      chili_pix.clear();
       tex_out.clear();
-      //pix_out.clear();
       proj_tags.clear();
       proj_bloques.clear();
       msg_server.dispose();
       bin_server.dispose();
       blobs_server.dispose();
     };
-
-    //ofPixels& pixels()
-    //{
-      //return pix_out;
-    //};
 
     ofTexture& texture()
     {
@@ -354,10 +345,10 @@ class Backend
 
     ofPixels cam_pix;
     ofPixels chili_pix;
+    ofPixels seg_pix;
     ofPixels pix, pix_resized;
     ofTexture cam_tex;
     ofTexture tex_out;
-    //ofPixels pix_out;
 
     vector<ChiliTag> proj_tags;
     map<int, Bloque> proj_bloques; 

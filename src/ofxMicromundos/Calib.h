@@ -92,34 +92,41 @@ class Calib
       render_calib_pts();
     }; 
 
-    void transform(
-        ofPixels &src, ofPixels &dst, 
-        float w, float h)
+    void transform(ofPixels &src, ofPixels &dst)
     {
       if (!H_ready)
-        return;
+        return; 
 
-      float sw = src.getWidth();
-      float sh = src.getHeight(); 
-      ofPixels src2;
+      cv::Mat src_mat = toCv(src);
+      cv::Mat dst_mat = toCv(dst);
 
-      TS_START("transform_pix_resize");
-      ofxCv::resize(src, src2, w/sw, h/sh);
-      TS_STOP("transform_pix_resize");
+      TS_START("transform_pix_calc_maps"); 
+      if (!H_maps_ready)
+      {
+        perspective_to_maps(H_cv, src_mat.size(), H_map_x, H_map_y);
+        H_maps_ready = true;
+      }
+      TS_STOP("transform_pix_calc_maps"); 
 
-      //TS_START("transform_pix_imitate");
-      //delegate dst allocation
-      //ofxCv::imitate(dst, src2);
-      //TS_STOP("transform_pix_imitate");
+      TS_START("transform_pix_warp"); 
+      cv::remap(src_mat, dst_mat, H_map_x, H_map_y, CV_INTER_LINEAR);
+      TS_STOP("transform_pix_warp");
 
-      transform_pix(src2, dst);
+      //TS_START("transform_pix_warp");
+      //cv::warpPerspective(src_mat, dst_mat, H_cv, src_mat.size(), cv::INTER_LINEAR);
+      //TS_STOP("transform_pix_warp");
+
+      //toOf(dst_mat, dst); //Segmentation fault RPI
     }; 
 
-    //in place
-    void transform(ofPixels &pix, float w, float h) 
-    { 
-      transform(pix, pix, w, h); 
-    };
+    void transform(ofPixels &src, ofPixels &dst, float w, float h)
+    {
+      ofPixels src_resized;
+      TS_START("transform_pix_resize");
+      ofxCv::resize(src, src_resized, w/src.getWidth(), h/src.getHeight());
+      TS_STOP("transform_pix_resize");
+      transform(src_resized, dst);
+    }
 
     void transform(vector<ChiliTag>& src_tags, vector<ChiliTag>& dst_tags, float w, float h)
     {
@@ -218,30 +225,6 @@ class Calib
       transform_pts(points, points);
     };
 
-    void transform_pix(ofPixels& src, ofPixels& dst)
-    {
-      cv::Mat src_mat = toCv(src);
-      cv::Mat dst_mat = toCv(dst);
-
-      TS_START("transform_pix_calc_maps"); 
-      if (!H_maps_ready)
-      {
-        perspective_to_maps(H_cv, src_mat.size(), H_map_x, H_map_y);
-        H_maps_ready = true;
-      }
-      TS_STOP("transform_pix_calc_maps"); 
-
-      TS_START("transform_pix_warp"); 
-      cv::remap(src_mat, dst_mat, H_map_x, H_map_y, CV_INTER_LINEAR);
-      TS_STOP("transform_pix_warp");
-
-      //TS_START("transform_pix_warp");
-      //cv::warpPerspective(src_mat, dst_mat, H_cv, src_mat.size(), cv::INTER_LINEAR);
-      //TS_STOP("transform_pix_warp");
-
-      //toOf(dst_mat, dst); //Segmentation fault RPI
-    };
-
     /*
      * http://www.smallbulb.net/2013/351-opencv-convert-projection-matrix-to-maps
      *
@@ -281,11 +264,6 @@ class Calib
       // remap() with integer maps is faster
       cv::convertMaps(maps[0], maps[1], map1, map2, CV_16SC2);
     }
-
-    void transform_pix(ofPixels& pix)
-    {
-      transform_pix(pix, pix);
-    };
 
     ChiliTag transform_tag(ChiliTag &src_tag, ofVec2f &scale)
     {

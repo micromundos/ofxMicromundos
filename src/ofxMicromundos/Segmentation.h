@@ -19,13 +19,14 @@ class Segmentation : public ofThread
     {
       this->threaded = threaded;
       out_pix.allocate(w, h, 1);
+      out_pix_back.allocate(w, h, 1);
       out_pix_render.allocate(w, h, 1);
-      intra_pix_back.allocate(w, h, 1);
       if (threaded) 
         startThread();
     };
 
     void update(ofPixels& pix, vector<ChiliTag>& tags)
+        //, float w, float h)
     {
       if (threaded)
       {
@@ -33,9 +34,11 @@ class Segmentation : public ofThread
         front_pix = pix;
         front_tags = tags;
         new_data = true;
+        //width = w;
+        //height = h;
         if (segmented)
         {
-          swap(out_pix, intra_pix);
+          swap(out_pix, out_pix_intra);
           update_tex();
           segmented = false;
         }
@@ -44,6 +47,8 @@ class Segmentation : public ofThread
       }
       else
       {
+        //width = w;
+        //height = h;
         segment(pix, tags, out_pix);
         update_tex();
       }
@@ -58,12 +63,12 @@ class Segmentation : public ofThread
     void dispose()
     {
       out_pix.clear();
+      out_pix_back.clear();
+      out_pix_intra.clear();
       out_pix_render.clear();
       out_tex.clear();
       back_pix.clear();
       front_pix.clear();
-      intra_pix.clear();
-      intra_pix_back.clear();
     };
 
     ofPixels& pixels()
@@ -73,12 +78,14 @@ class Segmentation : public ofThread
 
   private:
 
-    ofPixels out_pix;
-    ofPixels out_pix_render;
+    ofPixels out_pix, out_pix_back, out_pix_intra, out_pix_render;
     ofTexture out_tex;
+    cv::Mat bin_mat;
+
+    //float width, height;
 
     bool threaded, new_data, segmented;
-    ofPixels back_pix, front_pix, intra_pix, intra_pix_back;
+    ofPixels back_pix, front_pix;
     vector<ChiliTag> back_tags, front_tags;
     Poco::Condition condition;
 
@@ -87,8 +94,10 @@ class Segmentation : public ofThread
       while (isThreadRunning())
       {
         lock();
+
         if (!new_data)
           condition.wait(mutex);
+
         bool run_segmentation = false;
         if (new_data)
         {
@@ -97,12 +106,14 @@ class Segmentation : public ofThread
           run_segmentation = true;
           new_data = false;
         }
+
         unlock();
+
         if (run_segmentation)
         {
-          segment(back_pix, back_tags, intra_pix_back);
+          segment(back_pix, back_tags, out_pix_back);
           lock();
-          swap(intra_pix_back, intra_pix);
+          swap(out_pix_back, out_pix_intra);
           segmented = true;
           unlock();
         }
@@ -111,8 +122,12 @@ class Segmentation : public ofThread
 
     void segment(ofPixels& pix, vector<ChiliTag>& tags, ofPixels& dst)
     {
-      cv::Mat bin_mat;
+      TS_START("segment");
+
       ofxCv::copyGray(pix, bin_mat);
+
+      //ofxCv::resize(bin_mat, bin_mat, width/pix.getWidth(), height/pix.getHeight());
+
       ofxCv::autothreshold(bin_mat, false);
       fillTags(tags, bin_mat);
 
@@ -124,6 +139,8 @@ class Segmentation : public ofThread
       ofxCv::erode(bin_mat, 4);
 
       ofxCv::toOf(bin_mat, dst); 
+
+      TS_STOP("segment");
     };
 
     void update_tex()
