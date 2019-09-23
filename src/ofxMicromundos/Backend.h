@@ -34,6 +34,7 @@ class Backend
         int cam_device_id, 
         string calib_H_cam_proj_file, 
         string calib_cam_file, 
+        float chilitags_fps,
         float resize_bin,
         int calib_tag_id,
         const Json::Value& juegos_config,
@@ -57,7 +58,7 @@ class Backend
           calib_tag_id);
 
       cam.init(cam_w, cam_h, cam_device_id);
-      chilitags.init(); 
+      chilitags.init(true, 10, chilitags_fps); 
       seg.init(cam_w, cam_h, false); //TODO segmentation thread
       blobs.init();
 
@@ -219,6 +220,13 @@ class Backend
 
       if (blobs_server.connected())
         blobs.render(x, y+_h*2, w, _h);
+    };
+
+    void render_texture(float x, float y, float w, float h)
+    {
+      ofTexture& tex = texture();
+      if (tex.isAllocated())
+        tex.draw(x, y, w, h);
     };
 
     void print_connection(float x, float y)
