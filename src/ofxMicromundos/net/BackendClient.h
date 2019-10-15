@@ -29,6 +29,7 @@ class BackendClient
       _msg.init(ip, port_msg); 
       _bin.init(ip, port_bin);
       _blobs.init(ip, port_blobs); 
+      LH = 24; 
     };
 
     void update()
@@ -70,22 +71,21 @@ class BackendClient
       ofPopMatrix();
     };
 
-    void print_connection(float x, float y)
+    void print_connections(float x, float& y)
     {
-      float lh = 24;
-      _bin.print_connection(x, y);
-      _msg.print_connection(x, y + lh);
-      _blobs.print_connection(x, y + lh*2);
+      _bin.print_connection(x, y, LH);
+      _msg.print_connection(x, y, LH);
+      _blobs.print_connection(x, y, LH);
     };
 
-    void print_metadata(float x, float y)
+    void print_metadata(float x, float& y)
     {
-      _msg.print_metadata(x, y);
+      _msg.print_metadata(x, y, LH);
     };
 
-    void print_bloques(float x, float y)
+    void print_bloques(float x, float& y)
     {
-      _msg.print_bloques(x, y);
+      _msg.print_bloques(x, y, LH);
     };
 
     ofPixels& projected_pixels()
@@ -124,12 +124,15 @@ class BackendClient
     //int pix_height() { return _msg.pix_height(); };
     //int pix_ready() { return _msg.pix_ready(); }; 
 
+    float line_height() { return LH; };
+
   private:
 
     BinClient _bin;
     MsgClient _msg;
     BlobsClient _blobs;
     vector<ofVec2f> proj_pts;
+    float LH;
 
     void render_calib_pts()
     {

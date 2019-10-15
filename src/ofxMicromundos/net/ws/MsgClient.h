@@ -55,21 +55,28 @@ class MsgClient
       return true;
     };
 
-    void print_connection(float x, float y)
+    void print_connection(float x, float& y, float LH)
     {
       ofxLibwebsockets::Connection* conn = client.getConnection();
       if (conn == nullptr)
+      {
+        string info = "msg not connected"; 
+        ofDrawBitmapStringHighlight(info, x, y);
+        y += LH;
         return;
+      }
+
       string name = conn->getClientName();
       string ip = conn->getClientIP();
       string info = "msg connected: name="+name + " / ip=" + ip; 
-      float lh = 24;
-      ofDrawBitmapStringHighlight(info, x, y+lh/2);
+      ofDrawBitmapStringHighlight(info, x, y);
+      y += LH;
     };
 
-    void print_metadata(float x, float y)
+    void print_metadata(float x, float& y, float LH)
     {
       stringstream msg;
+
       msg << "metadata= "
         << "\n"
         << " pixels:" 
@@ -85,16 +92,18 @@ class MsgClient
         << "\n"
         << " juegos:"
           << " active " << _juego_active;
-      float lh = 24;
-      ofDrawBitmapStringHighlight(msg.str(), x, y+lh/2);
+
+      ofDrawBitmapStringHighlight(msg.str(), x, y);
+
+      float lines = 5;
+      y += LH * lines;
     };
 
-    void print_bloques(float x, float y)
+    void print_bloques(float x, float& y, float LH)
     {
-      float lh = 24;
-      y += lh/2;
       ofDrawBitmapStringHighlight("bloques", x, y);
-      y += lh;
+      y += LH;
+
       for (const auto& bloque : _bloques)
       {
         const Bloque& b = bloque.second;
@@ -106,7 +115,7 @@ class MsgClient
           //<< " radio " << b.radio
           //<< " angle " << b.angle;
         ofDrawBitmapStringHighlight(bstr.str(), x, y);
-        y += lh;
+        y += LH;
       }
     };
 

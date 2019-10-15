@@ -16,9 +16,7 @@ class Blobs
     };
 
     void dispose()
-    {
-
-    };
+    {};
 
     void init()
     {

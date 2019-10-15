@@ -46,16 +46,22 @@ class BlobsClient
       return true;
     };
 
-    void print_connection(float x, float y)
+    void print_connection(float x, float& y, float LH)
     {
       ofxLibwebsockets::Connection* conn = client.getConnection();
       if (conn == nullptr)
+      {
+        string info = "blobs not connected"; 
+        ofDrawBitmapStringHighlight(info, x, y);
+        y += LH;
         return;
+      }
+
       string name = conn->getClientName();
       string ip = conn->getClientIP();
       string info = "blobs connected: name="+name + " / ip=" + ip;
-      float lh = 24;
-      ofDrawBitmapStringHighlight(info, x, y+lh/2);
+      ofDrawBitmapStringHighlight(info, x, y);
+      y += LH;
     };
 
     bool connected()

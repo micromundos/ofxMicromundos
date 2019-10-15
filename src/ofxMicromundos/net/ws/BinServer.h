@@ -16,9 +16,9 @@ class BinServer
 
     void init(int port)
     {
-      ofxLibwebsockets::ServerOptions cfg = ofxLibwebsockets::defaultServerOptions();
-      cfg.port = port;
-      _server.setup(cfg); 
+      ofxLibwebsockets::ServerOptions opt = ofxLibwebsockets::defaultServerOptions();
+      opt.port = port;
+      _server.setup(opt); 
     };
 
     void dispose()

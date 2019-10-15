@@ -46,6 +46,7 @@ class Backend
       this->proj_h = proj_h;
       this->resize_bin = resize_bin;
 
+      LH = 24; 
       _calib_enabled = false;
       cam_updated = false;
 
@@ -229,23 +230,25 @@ class Backend
         tex.draw(x, y, w, h);
     };
 
-    void print_connection(float x, float y)
+    void print_connections(float x, float& y)
     { 
       print_ws_connection(
           msg_server.server(), 
           msg_server.connected(), 
           "msg", x, y);
+
       print_ws_connection(
           bin_server.server(), 
           bin_server.connected(), 
           "bin", x, y);
+
       print_ws_connection(
           blobs_server.server(), 
           blobs_server.connected(), 
           "blobs", x, y);
     }; 
 
-    void print_metadata(float x, float y)
+    void print_metadata(float x, float& y)
     {
       stringstream status;
       status << "metadata= \n";
@@ -266,16 +269,16 @@ class Backend
         << " juegos:"
           << " active " << juegos.active();
 
-      float lh = 24;
-      ofDrawBitmapStringHighlight(status.str(), x, y+lh/2);
+      float lines = 4;
+      ofDrawBitmapStringHighlight(status.str(), x, y);
+      y += LH*lines;
     };
 
-    void print_bloques(float x, float y)
+    void print_bloques(float x, float& y)
     {
-      float lh = 24;
-      y += lh/2;
       ofDrawBitmapStringHighlight("bloques", x, y, ofColor::yellow, ofColor::black);
-      y += lh;
+      y += LH;
+
       for (const auto& bloque : proj_bloques)
       {
         const Bloque& b = bloque.second;
@@ -287,16 +290,15 @@ class Backend
           //<< " radio " << b.radio
           //<< " angle " << b.angle;
         ofDrawBitmapStringHighlight(status.str(), x, y, ofColor::yellow, ofColor::black);
-        y += lh;
+        y += LH;
       }
     }; 
 
-    void print_blobs(float x, float y)
+    void print_blobs(float x, float& y)
     {
-      float lh = 24;
-      y += lh/2;
       string status = !blobs_server.connected() ? "not connected" : ofToString(blobs.get().size()); 
       ofDrawBitmapStringHighlight("blobs: "+status, x, y, ofColor::yellow, ofColor::black);
+      y += LH;
     };
 
     void dispose()
@@ -334,12 +336,18 @@ class Backend
       return _calib_enabled;
     };
 
+    float line_height()
+    {
+      return LH;
+    };
+
   private:
 
     float proj_w, proj_h;
     float resize_bin;
     float _calib_enabled;
     bool cam_updated;
+    float LH;
 
     RGB cam;
     MsgServer msg_server;
@@ -431,12 +439,10 @@ class Backend
         string name, 
         float x, float& y)
     {
-      float lh = 24; 
-
       if (!connected)
       {
-        y += lh;
         ofDrawBitmapStringHighlight("ws server "+name+" not connected", x, y, ofColor::red, ofColor::black);
+        y += LH;
         return;
       } 
 
@@ -451,8 +457,9 @@ class Backend
         string ip = conn->getClientIP();
         string info = "client "+name+" from ip "+ip;
 
-        y += lh;
+        y += LH;
         ofDrawBitmapString(info, x, y);
+        y += LH;
       }
     };
 };
