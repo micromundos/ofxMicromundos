@@ -132,11 +132,11 @@ class Segmentation : public ofThread
       fillTags(tags, bin_mat);
 
       //open
-      ofxCv::erode(bin_mat, 2);
-      ofxCv::dilate(bin_mat, 2);
+      //ofxCv::erode(bin_mat, 2);
+      //ofxCv::dilate(bin_mat, 2);
       //close
-      ofxCv::dilate(bin_mat, 2);
-      ofxCv::erode(bin_mat, 4);
+      //ofxCv::dilate(bin_mat, 2);
+      //ofxCv::erode(bin_mat, 4);
 
       ofxCv::toOf(bin_mat, dst); 
 
