@@ -58,6 +58,7 @@ class Backend
           calib_cam_file, 
           calib_tag_id);
 
+      //TODO perf: test cam res 1600x900
       cam.init(cam_w, cam_h, cam_device_id);
       chilitags.init(true, 10, chilitags_fps); 
       seg.init(cam_w, cam_h, false); //TODO segmentation thread
@@ -99,6 +100,7 @@ class Backend
         calib.calibrate(tags, proj_w, proj_h);
 
       TS_START("segmentation_resize");
+      //TODO perf: (backend) pre segmentation: resize pix -> move to gpu
       ofxCv::resize(cam_pix, seg_pix, proj_w/cam.width(), proj_h/cam.height());
       TS_STOP("segmentation_resize");
 

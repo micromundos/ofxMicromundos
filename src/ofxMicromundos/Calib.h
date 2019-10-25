@@ -109,6 +109,7 @@ class Calib
       TS_STOP("transform_pix_calc_maps"); 
 
       TS_START("transform_pix_warp"); 
+      //TODO perf: (calib.transform) remap from homography -> move to gpu
       cv::remap(src_mat, dst_mat, H_map_x, H_map_y, CV_INTER_LINEAR);
       TS_STOP("transform_pix_warp");
 
@@ -140,6 +141,7 @@ class Calib
         dst_tags.push_back(transform_tag(src_tags[i], scale)); 
     };
 
+    //TODO perf: (calib.undistort) remap from intrinsics/distortion -> move to gpu
     void undistort(ofPixels& pix)
     {
       if (!cam_calib.isReady())

@@ -124,13 +124,17 @@ class Segmentation : public ofThread
     {
       TS_START("segment");
 
+      //TODO perf: (segment) get gray pix from previous task (chilitags?)
       ofxCv::copyGray(pix, bin_mat);
 
       //ofxCv::resize(bin_mat, bin_mat, width/pix.getWidth(), height/pix.getHeight());
 
       ofxCv::autothreshold(bin_mat, false);
-      fillTags(tags, bin_mat);
 
+      //TODO perf: (segment) fill_tags -> move to gpu
+      fill_tags(tags, bin_mat);
+
+      //TODO perf: (segment) dilate/erode -> move to gpu
       //open
       //ofxCv::erode(bin_mat, 2);
       //ofxCv::dilate(bin_mat, 2);
@@ -150,7 +154,7 @@ class Segmentation : public ofThread
     };
 
     //based on ofxCv::fillPoly(points, dst);
-    void fillTags(vector<ChiliTag>& tags, cv::Mat dstMat)
+    void fill_tags(vector<ChiliTag>& tags, cv::Mat dstMat)
     {
       int w = dstMat.cols;
       int h = dstMat.rows;
