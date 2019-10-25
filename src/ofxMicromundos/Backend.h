@@ -140,7 +140,7 @@ class Backend
         bool blobs_enabled)
     {
       if (!cam_updated) 
-        return false;
+        return;
 
       ofPixels* out_pix;
       TS_START("resize_to_send");
