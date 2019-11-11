@@ -35,7 +35,7 @@ class Backend
         string calib_H_cam_proj_file, 
         string calib_cam_file, 
         float chilitags_fps,
-        float resize_bin,
+        float resize_pix,
         int calib_tag_id,
         const Json::Value& juegos_config,
         int port_bin,
@@ -44,13 +44,16 @@ class Backend
     {
       this->proj_w = proj_w;
       this->proj_h = proj_h;
-      this->resize_bin = resize_bin;
+      this->resize_pix = resize_pix;
 
       LH = 24; 
       _calib_enabled = false;
       cam_updated = false;
 
-      pix.allocate(proj_w, proj_h, 1);
+      seg_scale_x = proj_w/cam_w;
+      seg_scale_y = proj_h/cam_h;
+
+      pix_out.allocate(proj_w, proj_h, 1);
 
       calib.init(
           proj_w, proj_h, 
@@ -58,7 +61,7 @@ class Backend
           calib_cam_file, 
           calib_tag_id);
 
-      //TODO perf: test cam res 1600x900
+      //TODO TEST perf (0) cam res 1600x900
       cam.init(cam_w, cam_h, cam_device_id);
       chilitags.init(true, 10, chilitags_fps); 
       seg.init(cam_w, cam_h, false); //TODO segmentation thread
@@ -81,9 +84,9 @@ class Backend
         return false;
 
       cam_pix = cam.pixels();
-      TS_START("undistort");
+      TS_START("undistort_cam");
       calib.undistort(cam_pix);
-      TS_STOP("undistort");
+      TS_STOP("undistort_cam");
 
       TS_START("chilitags_copy");
       ofxMicromundos::copy_pix(cam_pix, chili_pix);
@@ -99,26 +102,25 @@ class Backend
       if (_calib_enabled)
         calib.calibrate(tags, proj_w, proj_h);
 
-      TS_START("segmentation_resize");
-      //TODO perf: (backend) pre segmentation: resize pix -> move to gpu
-      ofxCv::resize(cam_pix, seg_pix, proj_w/cam.width(), proj_h/cam.height());
-      TS_STOP("segmentation_resize");
+      TS_START("resize_cam");
+      //TODO perf (2) (backend) resize pix for segmentation -> move to gpu
+      ofxCv::resize(cam_pix, seg_pix, seg_scale_x, seg_scale_y);
+      TS_STOP("resize_cam");
 
       TS_START("segmentation");
-      seg.update(seg_pix, tags); 
-      //seg.update(cam_pix, tags); 
-      //seg.update(cam_pix, tags, proj_w, proj_h); 
+      bool update_pix = true;
+      seg.update(seg_pix, tags, update_pix); 
       TS_STOP("segmentation");
 
-      TS_START("transform_pix");
-      calib.transform(seg.pixels(), pix);
-      //calib.transform(seg.pixels(), pix, proj_w, proj_h);
-      TS_STOP("transform_pix");
+      TS_START("transform_segmentation");
+      //calib.transform_tex(seg.texture(), pix_out);
+      calib.transform_pix(seg.pixels(), pix_out);
+      TS_STOP("transform_segmentation");
 
-      tex_out.loadData(pix);
+      tex_out.loadData(pix_out);
 
       TS_START("transform_tags");
-      calib.transform(tags, proj_tags, proj_w, proj_h);
+      calib.transform_tags(tags, proj_tags, proj_w, proj_h);
       TS_STOP("transform_tags");
 
       TS_START("tags_to_bloques");
@@ -127,7 +129,7 @@ class Backend
 
       TS_START("blobs");
       if (blobs_server.connected())
-        blobs.update(pix);
+        blobs.update(pix_out);
       TS_STOP("blobs");
 
       juegos.update(proj_bloques);
@@ -144,22 +146,22 @@ class Backend
       if (!cam_updated) 
         return;
 
-      ofPixels* out_pix;
+      ofPixels* pix_to_send;
       TS_START("resize_to_send");
-      if (resize_bin != 1.0)
+      if (resize_pix != 1.0)
       {
         ofxCv::resize(
-            pix, pix_resized, 
-            resize_bin, resize_bin);
-        out_pix = &pix_resized;
+            pix_out, pix_resized, 
+            resize_pix, resize_pix);
+        pix_to_send = &pix_resized;
       }
       else
-        out_pix = &pix;
+        pix_to_send = &pix_out;
       TS_STOP("resize_to_send");
 
       TS_START("send_msg");
       msg_server.send(
-          *out_pix,
+          *pix_to_send,
           proj_bloques,
           message_enabled,
           binary_enabled,
@@ -169,7 +171,7 @@ class Backend
       TS_STOP("send_msg");
 
       TS_START("send_bin");
-      bin_server.send(*out_pix, binary_enabled);
+      bin_server.send(*pix_to_send, binary_enabled);
       TS_STOP("send_bin");
 
       TS_START("send_blobs");
@@ -255,13 +257,13 @@ class Backend
       stringstream status;
       status << "metadata= \n";
 
-      if (pix.isAllocated())
+      if (pix_out.isAllocated())
       {
         status << " pixels:" 
             << " dim " 
-              << pix.getWidth() << "," 
-              << pix.getHeight()
-            << " chan " << pix.getNumChannels()
+              << pix_out.getWidth() << "," 
+              << pix_out.getHeight()
+            << " chan " << pix_out.getNumChannels()
           << "\n";
       }
 
@@ -311,7 +313,7 @@ class Backend
       blobs.dispose();
       cam_pix.clear();
       cam_tex.clear();
-      pix.clear();
+      pix_out.clear();
       pix_resized.clear();
       seg_pix.clear();
       chili_pix.clear();
@@ -346,7 +348,8 @@ class Backend
   private:
 
     float proj_w, proj_h;
-    float resize_bin;
+    float seg_scale_x, seg_scale_y;
+    float resize_pix;
     float _calib_enabled;
     bool cam_updated;
     float LH;
@@ -364,7 +367,7 @@ class Backend
     ofPixels cam_pix;
     ofPixels chili_pix;
     ofPixels seg_pix;
-    ofPixels pix, pix_resized;
+    ofPixels pix_out, pix_resized;
     ofTexture cam_tex;
     ofTexture tex_out;
 

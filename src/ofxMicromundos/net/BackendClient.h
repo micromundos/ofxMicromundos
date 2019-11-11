@@ -56,9 +56,9 @@ class BackendClient
       return calib_enabled();
     };
 
-    void render_projected_pixels(float w, float h)
+    void render_texture(float x, float y, float w, float h)
     {
-      _bin.render(0, 0, w, h);
+      _bin.render(x, y, w, h);
     };
 
     void render_blobs(float x, float y, float w, float h)
