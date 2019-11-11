@@ -5,8 +5,6 @@
 #include "ofxMicromundos/net/ws/MsgClient.h"
 #include "ofxMicromundos/net/ws/BlobsClient.h"
 
-//TODO BackendClient rename projected_xxx to xxx
-
 class BackendClient
 {
   public:
@@ -49,7 +47,7 @@ class BackendClient
       _blobs.dispose();
     };
 
-    bool render_calib(float w, float h)
+    bool render_calib()
     {
       if (calib_enabled())
         render_calib_pts();
@@ -88,17 +86,17 @@ class BackendClient
       _msg.print_bloques(x, y, LH);
     };
 
-    ofPixels& projected_pixels()
+    ofPixels& pixels()
     {
       return _bin.pixels();
     };
 
-    ofTexture& projected_texture()
+    ofTexture& texture()
     {
       return _bin.texture();
     };
 
-    map<int, Bloque>& projected_bloques()
+    map<int, Bloque>& bloques()
     {
       return _msg.bloques();
     };
