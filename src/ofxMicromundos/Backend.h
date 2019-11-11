@@ -105,18 +105,17 @@ class Backend
       TS_START("segmentation");
       seg.update(seg_pix, tags); 
       //seg.update(cam_pix, tags); 
-      //seg.update(cam_pix, tags, proj_w, proj_h); 
       TS_STOP("segmentation");
 
       TS_START("transform_pix");
-      calib.transform(seg.pixels(), pix);
-      //calib.transform(seg.pixels(), pix, proj_w, proj_h);
+      //calib.transform_pix(seg.pixels(), pix);
+      calib.transform_tex(seg.texture(), pix);
       TS_STOP("transform_pix");
 
       tex_out.loadData(pix);
 
       TS_START("transform_tags");
-      calib.transform(tags, proj_tags, proj_w, proj_h);
+      calib.transform_tags(tags, proj_tags, proj_w, proj_h);
       TS_STOP("transform_tags");
 
       TS_START("tags_to_bloques");
