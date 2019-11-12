@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ofxGPGPU.h"
+//#include "ofxGPGPU.h"
 #include "ofxCv.h"
 #include "ofxChilitags.h"
 #include "ofxMicromundos/utils.h"
@@ -31,9 +31,9 @@ class Calib
       H_ready = false;
       H_maps_ready = false;
 
-      H_proc
-        .init("glsl/cv/homography.frag", proj_w, proj_h)
-        .on("update", this, &Calib::update_H_proc);
+      //H_proc
+        //.init("glsl/cv/homography.frag", proj_w, proj_h)
+        //.on("update", this, &Calib::update_H_proc);
 
       calib_tags.resize(4);
       for (int i = 0; i < calib_tags.size(); i++)
@@ -121,8 +121,21 @@ class Calib
       //cv::warpPerspective(src_mat, dst_mat, H_cv, src_mat.size(), cv::INTER_LINEAR);
       //TS_STOP("transform_pix_warp");
 
-      //toOf(dst_mat, dst); //Segmentation fault RPI
+      //toOf(dst_mat, dst); //raspi: Segmentation fault
     }; 
+
+    //TODO perf (4) (calib.transform_tex) apply homography -> move to gpu
+    //void transform_tex(ofTexture& src, ofPixels& dst)
+    //{
+      //if (!H_ready)
+        //return;
+      //H_proc
+        //.set("tex", src)
+        //.update();
+      //H_tex = H_proc.get();
+      ////XXX FIXME perf bottleneck (calib.transform_tex): read pixels GPU -> CPU
+      //dst = H_proc.get_data_pix(); 
+    //};
 
     void transform_tags(vector<ChiliTag>& src_tags, vector<ChiliTag>& dst_tags, float w, float h)
     {
@@ -143,26 +156,13 @@ class Calib
       cv::Mat mat = toCv(pix);
       cam_calib.undistort(mat);
       toOf(mat, pix);
-    };
-
-    //TODO TEST perf (4) (calib.transform_tex) apply homography -> move to gpu
-    void transform_tex(ofTexture& src, ofPixels& dst)
-    {
-      if (!H_ready)
-        return;
-      H_proc
-        .set("input", src)
-        .update();
-      H_tex = H_proc.get();
-      //XXX FIXME perf bottleneck (calib.transform_tex): read pixels GPU -> CPU
-      dst = H_proc.get_data_pix(); 
-    };
+    }; 
 
     void dispose()
     {
-      H_proc
-        .off("update", this, &Calib::update_H_proc)
-        .dispose();
+      //H_proc
+        //.off("update", this, &Calib::update_H_proc)
+        //.dispose();
     }; 
 
   private:
@@ -174,8 +174,8 @@ class Calib
     cv::Mat H_cv;
     bool H_ready;
 
-    gpgpu::Process H_proc;
-    ofTexture H_tex;
+    //gpgpu::Process H_proc;
+    //ofTexture H_tex;
 
     cv::Mat H_map_x, H_map_y;
     bool H_maps_ready;
@@ -189,17 +189,17 @@ class Calib
     vector<cv::Point2f> proj_pts;
     vector<ofVec2f> proj_coords; 
 
-    void update_H_proc(ofShader& shader)
-    {
-      //see ofShader.setUniformMatrix3f
-      if (!shader.isLoaded()) return;
-      int loc = shader.getUniformLocation("H_inverse");
-      if (loc == -1) return;
-      int count = 1;
-      float* H_cv_ptr = H_cv.ptr<float>(); 
-      bool transpose = true;
-      glUniformMatrix3fv(loc, count, transpose, H_cv_ptr);
-    };
+    //void update_H_proc(ofShader& shader)
+    //{
+      ////see ofShader.setUniformMatrix3f
+      //if (!shader.isLoaded()) return;
+      //int loc = shader.getUniformLocation("H_inverse");
+      //if (loc == -1) return;
+      //int count = 1;
+      //float* H_cv_ptr = H_cv.ptr<float>(); 
+      //bool transpose = true;
+      //glUniformMatrix3fv(loc, count, transpose, H_cv_ptr);
+    //};
 
     vector<ChiliTag> filter_calib_tag(vector<ChiliTag> &_tags)
     {

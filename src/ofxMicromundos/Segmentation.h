@@ -46,7 +46,6 @@ class Segmentation : public ofThread
         {
           swap(out_pix, out_pix_intra);
           //XXX TODO update threaded segmentation results
-          //update_tex();
           segmented = false;
         }
         condition.signal();
@@ -55,7 +54,6 @@ class Segmentation : public ofThread
       else
       {
         update_1_thread(pix, tags, out_pix);
-        //update_tex();
       }
     };
 
@@ -127,8 +125,8 @@ class Segmentation : public ofThread
           segment(back_pix, back_tags, bin_mat);
 
           //XXX TODO update threaded segmentation results
-          filter_noise_cpu(bin_mat);
-          update_out_cpu(bin_mat, out_pix_back);
+          filter_noise(bin_mat);
+          update_output(bin_mat, out_pix_back);
 
           lock();
           swap(out_pix_back, out_pix_intra);
@@ -141,10 +139,8 @@ class Segmentation : public ofThread
     void update_1_thread(ofPixels& pix, vector<ChiliTag>& tags, ofPixels& out_pix)
     {
       segment(pix, tags, bin_mat);
-      filter_noise_cpu(bin_mat);
-      update_out_cpu(bin_mat, out_pix);
-      //filter_noise_gpu(bin_mat);
-      //update_out_gpu(erode, out_pix);
+      filter_noise(bin_mat);
+      update_output(bin_mat, out_pix); 
     };
 
     void segment(ofPixels& pix, vector<ChiliTag>& tags, cv::Mat& bin_mat)
@@ -152,8 +148,24 @@ class Segmentation : public ofThread
       TS_START("segment");
       ofxCv::copyGray(pix, bin_mat);
       ofxCv::autothreshold(bin_mat, false);
-      fillTags(tags, bin_mat);
+      fill_tags(tags, bin_mat);
       TS_STOP("segment");
+    };
+
+    void filter_noise(cv::Mat& bin_mat)
+    {
+      TS_START("filter_noise");
+      filter_noise_cpu(bin_mat);
+      //filter_noise_gpu(bin_mat);
+      TS_STOP("filter_noise");
+    };
+
+    void update_output(cv::Mat& bin_mat, ofPixels& dst)
+    {
+      TS_START("update_output");
+      update_out_cpu(bin_mat, dst);
+      //update_out_gpu(erode, out_pix);
+      TS_STOP("update_output");
     };
 
     void filter_noise_cpu(cv::Mat& bin_mat)
@@ -164,7 +176,7 @@ class Segmentation : public ofThread
       //close
       ofxCv::dilate(bin_mat, 2);
       ofxCv::erode(bin_mat, 4);
-    };
+    }; 
 
     void update_out_cpu(cv::Mat& bin_mat, ofPixels& dst)
     {
@@ -196,14 +208,8 @@ class Segmentation : public ofThread
       //if (update_pix) dst = proc.get_data_pix(); 
     //};
 
-    //void update_tex()
-    //{
-      //ofxMicromundos::copy_pix(out_pix, out_pix_render);
-      //out_tex.loadData(out_pix_render);
-    //};
-
     //based on ofxCv::fillPoly(points, dst);
-    void fillTags(vector<ChiliTag>& tags, cv::Mat dstMat)
+    void fill_tags(vector<ChiliTag>& tags, cv::Mat dstMat)
     {
       int w = dstMat.cols;
       int h = dstMat.rows;

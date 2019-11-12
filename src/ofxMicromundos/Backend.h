@@ -104,12 +104,11 @@ class Backend
 
       TS_START("segmentation");
       seg.update(seg_pix, tags); 
-      //seg.update(cam_pix, tags); 
       TS_STOP("segmentation");
 
       TS_START("transform_pix");
-      //calib.transform_pix(seg.pixels(), pix);
-      calib.transform_tex(seg.texture(), pix);
+      calib.transform_pix(seg.pixels(), pix);
+      //calib.transform_tex(seg.texture(), pix);
       TS_STOP("transform_pix");
 
       tex_out.loadData(pix);
@@ -123,8 +122,7 @@ class Backend
       TS_STOP("tags_to_bloques");
 
       TS_START("blobs");
-      if (blobs_server.connected())
-        blobs.update(pix);
+      blobs.update(pix);
       TS_STOP("blobs");
 
       juegos.update(proj_bloques);
@@ -205,28 +203,32 @@ class Backend
 
     void render_monitor(float x, float y, float w, float h)
     {
-      float _h = h/3;
+      float _h = h/4;
+      float _y = y;
 
-      cam.render(x, y, w, _h);
+      cam.render(x, _y, w, _h);
+      _y += _h;
 
       if (cam_pix.isAllocated())
         cam_tex.loadData(cam_pix);
       if (cam_tex.isAllocated())
-        cam_tex.draw(x, y+_h, w, _h);
+        cam_tex.draw(x, _y, w, _h);
+      chilitags.render(x, _y, w, _h);
+      _y += _h;
 
-      chilitags.render(x, y+_h, w, _h);
+      seg.render(x, _y, w, _h);
+      _y += _h;
 
-      seg.render(x, y+_h*2, w, _h);
-
-      if (blobs_server.connected())
-        blobs.render(x, y+_h*2, w, _h);
+      //blobs over image transformed by calib
+      render_texture(x, _y, w, _h);
+      blobs.render(x, _y, w, _h);
+      _y += _h;
     };
 
     void render_texture(float x, float y, float w, float h)
     {
-      ofTexture& tex = texture();
-      if (tex.isAllocated())
-        tex.draw(x, y, w, h);
+      if (tex_out.isAllocated())
+        tex_out.draw(x, y, w, h);
     };
 
     void print_connections(float x, float& y)
