@@ -23,6 +23,4 @@ namespace ofxMicromundos {
   void projector(ofxJSONElement& config);
 
   vector<ofVec2f> calib_points(float proj_w, float proj_h);
-
-  void copy_pix(ofPixels& src, ofPixels& dst);
 };

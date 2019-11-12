@@ -13,9 +13,6 @@
 #include "ofxMicromundos/Blobs.h"
 #include "ofxMicromundos/utils.h"
 
-//TODO Backend with ofThread
-//TODO Backend dedupe print funcs (MsgClient, etc)
-
 class Backend
 {
   public:
@@ -35,7 +32,7 @@ class Backend
         string calib_H_cam_proj_file, 
         string calib_cam_file, 
         float chilitags_fps,
-        float resize_bin,
+        float resize_pix,
         int calib_tag_id,
         const Json::Value& juegos_config,
         int port_bin,
@@ -44,13 +41,13 @@ class Backend
     {
       this->proj_w = proj_w;
       this->proj_h = proj_h;
-      this->resize_bin = resize_bin;
+      this->resize_pix = resize_pix;
 
       LH = 24; 
       _calib_enabled = false;
       cam_updated = false;
 
-      pix.allocate(proj_w, proj_h, 1);
+      pix_out.allocate(proj_w, proj_h, 1);
 
       calib.init(
           proj_w, proj_h, 
@@ -85,7 +82,7 @@ class Backend
       TS_STOP("undistort");
 
       TS_START("chilitags_copy");
-      ofxMicromundos::copy_pix(cam_pix, chili_pix);
+      copy_pix(cam_pix, chili_pix);
       TS_STOP("chilitags_copy");
 
       TS_START("chilitags");
@@ -107,11 +104,11 @@ class Backend
       TS_STOP("segmentation");
 
       TS_START("transform_pix");
-      calib.transform_pix(seg.pixels(), pix);
-      //calib.transform_tex(seg.texture(), pix);
+      calib.transform_pix(seg.pixels(), pix_out);
+      //calib.transform_tex(seg.texture(), pix_out);
       TS_STOP("transform_pix");
 
-      tex_out.loadData(pix);
+      tex_out.loadData(pix_out);
 
       TS_START("transform_tags");
       calib.transform_tags(tags, proj_tags, proj_w, proj_h);
@@ -122,7 +119,7 @@ class Backend
       TS_STOP("tags_to_bloques");
 
       TS_START("blobs");
-      blobs.update(pix);
+      blobs.update(pix_out);
       TS_STOP("blobs");
 
       juegos.update(proj_bloques);
@@ -139,22 +136,22 @@ class Backend
       if (!cam_updated) 
         return;
 
-      ofPixels* out_pix;
+      ofPixels* pix_to_send;
       TS_START("resize_to_send");
-      if (resize_bin != 1.0)
+      if (resize_pix != 1.0)
       {
         ofxCv::resize(
-            pix, pix_resized, 
-            resize_bin, resize_bin);
-        out_pix = &pix_resized;
+            pix_out, pix_resized, 
+            resize_pix, resize_pix);
+        pix_to_send = &pix_resized;
       }
       else
-        out_pix = &pix;
+        pix_to_send = &pix_out;
       TS_STOP("resize_to_send");
 
       TS_START("send_msg");
       msg_server.send(
-          *out_pix,
+          *pix_to_send,
           proj_bloques,
           message_enabled,
           binary_enabled,
@@ -164,7 +161,7 @@ class Backend
       TS_STOP("send_msg");
 
       TS_START("send_bin");
-      bin_server.send(*out_pix, binary_enabled);
+      bin_server.send(*pix_to_send, binary_enabled);
       TS_STOP("send_bin");
 
       TS_START("send_blobs");
@@ -206,9 +203,17 @@ class Backend
       float _h = h/4;
       float _y = y;
 
+      _y += LH/2;
+      text("cam input", x, _y);
+
+      _y += LH/2;
       cam.render(x, _y, w, _h);
       _y += _h;
 
+      _y += LH;
+      text("undistorted w/chilis", x, _y);
+
+      _y += LH/2;
       if (cam_pix.isAllocated())
         cam_tex.loadData(cam_pix);
       if (cam_tex.isAllocated())
@@ -216,10 +221,17 @@ class Backend
       chilitags.render(x, _y, w, _h);
       _y += _h;
 
+      _y += LH;
+      text("segmented", x, _y);
+
+      _y += LH/2;
       seg.render(x, _y, w, _h);
       _y += _h;
 
-      //blobs over image transformed by calib
+      _y += LH;
+      text("H transformed w/blobs", x, _y);
+
+      _y += LH/2;
       render_texture(x, _y, w, _h);
       blobs.render(x, _y, w, _h);
       _y += _h;
@@ -254,13 +266,13 @@ class Backend
       stringstream status;
       status << "metadata= \n";
 
-      if (pix.isAllocated())
+      if (pix_out.isAllocated())
       {
         status << " pixels:" 
             << " dim " 
-              << pix.getWidth() << "," 
-              << pix.getHeight()
-            << " chan " << pix.getNumChannels()
+              << pix_out.getWidth() << "," 
+              << pix_out.getHeight()
+            << " chan " << pix_out.getNumChannels()
           << "\n";
       }
 
@@ -277,7 +289,7 @@ class Backend
 
     void print_bloques(float x, float& y)
     {
-      ofDrawBitmapStringHighlight("bloques", x, y, ofColor::yellow, ofColor::black);
+      text("bloques", x, y);
       y += LH;
 
       for (const auto& bloque : proj_bloques)
@@ -290,7 +302,7 @@ class Backend
           //<< " dir " << b.dir
           //<< " radio " << b.radio
           //<< " angle " << b.angle;
-        ofDrawBitmapStringHighlight(status.str(), x, y, ofColor::yellow, ofColor::black);
+        text(status.str(), x, y);
         y += LH;
       }
     }; 
@@ -298,7 +310,7 @@ class Backend
     void print_blobs(float x, float& y)
     {
       string status = !blobs_server.connected() ? "not connected" : ofToString(blobs.get().size()); 
-      ofDrawBitmapStringHighlight("blobs: "+status, x, y, ofColor::yellow, ofColor::black);
+      text("blobs: "+status, x, y);
       y += LH;
     };
 
@@ -310,7 +322,7 @@ class Backend
       blobs.dispose();
       cam_pix.clear();
       cam_tex.clear();
-      pix.clear();
+      pix_out.clear();
       pix_resized.clear();
       seg_pix.clear();
       chili_pix.clear();
@@ -345,7 +357,7 @@ class Backend
   private:
 
     float proj_w, proj_h;
-    float resize_bin;
+    float resize_pix;
     float _calib_enabled;
     bool cam_updated;
     float LH;
@@ -363,7 +375,7 @@ class Backend
     ofPixels cam_pix;
     ofPixels chili_pix;
     ofPixels seg_pix;
-    ofPixels pix, pix_resized;
+    ofPixels pix_out, pix_resized;
     ofTexture cam_tex;
     ofTexture tex_out;
 
@@ -462,6 +474,16 @@ class Backend
         ofDrawBitmapString(info, x, y);
         y += LH;
       }
+    };
+
+    void text(string text, int x, int y)
+    {
+      ofDrawBitmapStringHighlight(text, x, y, ofColor::yellow, ofColor::black);
+    };
+
+    void copy_pix(ofPixels& src, ofPixels& dst)
+    {
+      dst.setFromPixels(src.getData(), src.getWidth(), src.getHeight(), src.getNumChannels());
     };
 };
 

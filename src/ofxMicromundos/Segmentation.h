@@ -1,10 +1,10 @@
 #pragma once
 
-//#include "ofxGPGPU.h"
 #include "ofxCv.h"
 #include "ofxChilitags.h"
 #include "ofxMicromundos/utils.h"
 #include "Poco/Condition.h"
+//#include "ofxGPGPU.h"
 
 class Segmentation : public ofThread
 {
@@ -21,14 +21,8 @@ class Segmentation : public ofThread
       this->threaded = threaded;
       out_pix.allocate(w, h, 1);
       out_pix_back.allocate(w, h, 1);
-      out_pix_render.allocate(w, h, 1);
 
-      //dilate
-        //.add_backbuffer("tex")
-        //.init("glsl/openvision/dilate.fs", w, h);
-      //erode
-        //.add_backbuffer("tex")
-        //.init("glsl/openvision/erode.fs", w, h);
+      //init_filter_noise_gpu(); 
 
       if (threaded) 
         startThread();
@@ -68,12 +62,10 @@ class Segmentation : public ofThread
       out_pix.clear();
       out_pix_back.clear();
       out_pix_intra.clear();
-      out_pix_render.clear();
       out_tex.clear();
       back_pix.clear();
       front_pix.clear();
-      //dilate.dispose();
-      //erode.dispose();
+      //dispose_filter_noise_gpu(); 
     };
 
     ofPixels& pixels()
@@ -88,12 +80,9 @@ class Segmentation : public ofThread
 
   private:
 
-    ofPixels out_pix, out_pix_back, out_pix_intra, out_pix_render;
+    ofPixels out_pix, out_pix_back, out_pix_intra;
     ofTexture out_tex;
-    cv::Mat bin_mat;
-
-    //gpgpu::Process dilate;
-    //gpgpu::Process erode;
+    cv::Mat bin_mat; 
 
     bool threaded, new_data, segmented;
     ofPixels back_pix, front_pix;
@@ -170,43 +159,17 @@ class Segmentation : public ofThread
 
     void filter_noise_cpu(cv::Mat& bin_mat)
     {
-      //open
-      ofxCv::erode(bin_mat, 2);
+      //open/close
+      ofxCv::erode(bin_mat, 1);
       ofxCv::dilate(bin_mat, 2);
-      //close
-      ofxCv::dilate(bin_mat, 2);
-      ofxCv::erode(bin_mat, 4);
+      ofxCv::erode(bin_mat, 1);
     }; 
 
     void update_out_cpu(cv::Mat& bin_mat, ofPixels& dst)
     {
-      //always update pixels if using cpu
       ofxCv::toOf(bin_mat, dst); 
       out_tex.loadData(dst);
-    };
-
-    //TODO perf (3d) (segment) dilate/erode -> move to gpu
-    //void filter_noise_gpu(cv::Mat& bin_mat)
-    //{
-      ////FIXME pointer fails
-      //float* mat_ptr = bin_mat.ptr<float>(); 
-      //erode
-        //.set("tex", mat_ptr)
-        //.update(2);
-      //dilate
-        //.set("tex", erode.get())
-        //.update(4);
-      //erode
-        //.set("tex", dilate.get())
-        //.update(4); 
-    //};
-
-    //void update_out_gpu(gpgpu::Process& proc, ofPixels& dst)
-    //{
-      //out_tex = proc.get();
-      ////XXX casts float to unsigned char
-      //if (update_pix) dst = proc.get_data_pix(); 
-    //};
+    }; 
 
     //based on ofxCv::fillPoly(points, dst);
     void fill_tags(vector<ChiliTag>& tags, cv::Mat dstMat)
@@ -230,5 +193,50 @@ class Segmentation : public ofThread
       }
     };
 
+    //GPU perf optim
+
+    //TODO perf segmentation: filter_noise dilate/erode on GPU
+
+    //gpgpu::Process dilate;
+    //gpgpu::Process erode;
+
+    //void filter_noise_gpu(cv::Mat& bin_mat)
+    //{
+      ////open/close
+      ////FIXME pointer fails
+      //float* mat_ptr = bin_mat.ptr<float>(); 
+      //erode
+        //.set("tex", mat_ptr)
+        //.update(2);
+      //dilate
+        //.set("tex", erode.get())
+        //.update(4);
+      //erode
+        //.set("tex", dilate.get())
+        //.update(4); 
+    //};
+
+    //void update_out_gpu(gpgpu::Process& proc, ofPixels& dst)
+    //{
+      //out_tex = proc.get();
+      ////XXX casts float to unsigned char FIXME perf bottleneck
+      //if (update_pix) dst = proc.get_data_pix(); 
+    //};
+
+    //void init_filter_noise_gpu()
+    //{
+      //dilate
+        //.add_backbuffer("tex")
+        //.init("glsl/openvision/dilate.fs", w, h);
+      //erode
+        //.add_backbuffer("tex")
+        //.init("glsl/openvision/erode.fs", w, h);
+    //};
+
+    //void dispose_filter_noise_gpu()
+    //{
+      //dilate.dispose();
+      //erode.dispose();
+    //};
 };
 
