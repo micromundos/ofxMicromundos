@@ -263,6 +263,8 @@ class Backend
 
     void print_metadata(float x, float& y)
     {
+      float lines = 1;
+
       stringstream status;
       status << "metadata= \n";
 
@@ -274,6 +276,18 @@ class Backend
               << pix_out.getHeight()
             << " chan " << pix_out.getNumChannels()
           << "\n";
+        lines++;
+      }
+
+      if (pix_resized.isAllocated())
+      {
+        status << " pix resized:" 
+            << " dim " 
+              << pix_resized.getWidth() << "," 
+              << pix_resized.getHeight()
+            << " chan " << pix_resized.getNumChannels()
+          << "\n";
+        lines++;
       }
 
       status << " calib:" 
@@ -281,8 +295,8 @@ class Backend
         << "\n"
         << " juegos:"
           << " active " << juegos.active();
+      lines++;
 
-      float lines = 4;
       ofDrawBitmapStringHighlight(status.str(), x, y);
       y += LH*lines;
     };
