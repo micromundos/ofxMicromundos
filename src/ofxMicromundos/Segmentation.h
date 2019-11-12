@@ -160,9 +160,16 @@ class Segmentation : public ofThread
     void filter_noise_cpu(cv::Mat& bin_mat)
     {
       //open/close
+#ifdef TARGET_RASPBERRY_PI
+      //TODO TEST perf raspi segmentation filter noise
       ofxCv::erode(bin_mat, 1);
       ofxCv::dilate(bin_mat, 2);
       ofxCv::erode(bin_mat, 1);
+#else
+      ofxCv::erode(bin_mat, 2);
+      ofxCv::dilate(bin_mat, 4);
+      ofxCv::erode(bin_mat, 2);
+#endif
     }; 
 
     void update_out_cpu(cv::Mat& bin_mat, ofPixels& dst)

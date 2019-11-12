@@ -270,7 +270,7 @@ class Backend
 
       if (pix_out.isAllocated())
       {
-        status << " pixels:" 
+        status << " pixels out:" 
             << " dim " 
               << pix_out.getWidth() << "," 
               << pix_out.getHeight()
@@ -281,7 +281,7 @@ class Backend
 
       if (pix_resized.isAllocated())
       {
-        status << " pix resized:" 
+        status << " pixels resized:" 
             << " dim " 
               << pix_resized.getWidth() << "," 
               << pix_resized.getHeight()
