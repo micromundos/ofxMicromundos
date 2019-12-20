@@ -10,8 +10,8 @@ class GUI
     ofParameter<bool> backend_monitor;
     ofParameter<bool> send_message;
     ofParameter<bool> send_binary;
-    ofParameter<bool> send_syphon;
     ofParameter<bool> send_blobs;
+    ofParameter<bool> send_syphon;
 
     void init_params()
     {

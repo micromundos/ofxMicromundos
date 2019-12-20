@@ -31,7 +31,8 @@ class Juegos
 
     string default_juego()
     {
-      return juegos_config.getMemberNames()[0];
+      vector<string> keys = juegos_config.getMemberNames();
+      return keys.empty() ? "" : keys.back();
     };
 
     string active()
