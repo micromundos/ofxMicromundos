@@ -69,18 +69,16 @@ namespace ofxMicromundos {
 
   vector<ofVec2f> calib_points(float proj_w, float proj_h)
   {
-    //pts: [ 
-      //[ 0.33, 0.33 ], [ 0.67, 0.33 ], 
-      //[ 0.33, 0.67 ], [ 0.67, 0.67 ] 
-    //]
-
     vector<ofVec2f> pts;
 
-    pts.push_back(ofVec2f( proj_w * 0.33, proj_h * 0.33 ));
-    pts.push_back(ofVec2f( proj_w * 0.67, proj_h * 0.33 ));
+    float near = 0.1;
+    float far = 0.9;
+
+    pts.push_back(ofVec2f( proj_w * near, proj_h * near ));
+    pts.push_back(ofVec2f( proj_w * far, proj_h * near ));
     //XXX clockwise
-    pts.push_back(ofVec2f( proj_w * 0.67, proj_h * 0.67 ));
-    pts.push_back(ofVec2f( proj_w * 0.33, proj_h * 0.67 ));
+    pts.push_back(ofVec2f( proj_w * far, proj_h * far ));
+    pts.push_back(ofVec2f( proj_w * near, proj_h * far ));
 
     return pts;
   };

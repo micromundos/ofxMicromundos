@@ -11,8 +11,8 @@ class Juegos
 
     void init(const Json::Value& juegos_config)
     {
-      this->juegos_config = juegos_config;
-      cur = "";
+      this->juegos_config = juegos_config; 
+      cur = default_juego();
     };
 
     void update(map<int, Bloque> bloques)
@@ -27,6 +27,11 @@ class Juegos
           break;
         }
       }
+    };
+
+    string default_juego()
+    {
+      return juegos_config.getMemberNames()[0];
     };
 
     string active()
