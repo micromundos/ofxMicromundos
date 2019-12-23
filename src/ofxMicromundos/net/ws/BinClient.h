@@ -30,16 +30,15 @@ class BinClient
     void dispose()
     {
       client.exit();
-      pix_data = nullptr;
       pix.clear();
       tex.clear();
     };
 
     bool update(int pix_w, int pix_h, int pix_chan)
     {
-      if ( !received )
+      if ( !received || !locked )
         return false;
-      deserialize(pix_data, pix_w, pix_h, pix_chan);
+      deserialize(data, pix_w, pix_h, pix_chan);
       received = false;
       locked = false;
       return true;
@@ -87,10 +86,14 @@ class BinClient
     void onMessage( ofxLibwebsockets::Event& args )
     {
       if ( !args.isBinary || locked )
-        return;
-      pix_data = args.data.getData();
+        return; 
+
+      data.clear();
+      data.set(args.data.getData(), args.data.size());
+      //memcpy(pix_data, args.data.getData(), args.data.size());
+
       locked = true;
-      received = true;
+      received = true; 
     };
 
     void onConnect( ofxLibwebsockets::Event& args )
@@ -113,19 +116,15 @@ class BinClient
     ofxLibwebsockets::Client client;
     bool received, locked;
 
-    char* pix_data;
+    ofBuffer data;
+    //char* pix_data;
+
     ofPixels pix;
     ofTexture tex;
 
-    void deserialize(char* pix_data, int pix_w, int pix_h, int pix_chan)
+    void deserialize(ofBuffer& data, int pix_w, int pix_h, int pix_chan)
     {
-      if (pix_data == nullptr)
-      {
-        ofLogWarning() << "pix_data = null";
-        return;
-      }
-
-      unsigned char* pixd = reinterpret_cast<unsigned char*>(pix_data);
+      unsigned char* pixd = reinterpret_cast<unsigned char*>(data.getData());
       pix.setFromPixels(pixd, pix_w, pix_h, pix_chan);
       tex.loadData(pix);
     }; 

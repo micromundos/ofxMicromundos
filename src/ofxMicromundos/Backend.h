@@ -47,7 +47,7 @@ class Backend
       _calib_enabled = false;
       cam_updated = false;
 
-      pix_out.allocate(proj_w, proj_h, 1);
+      proj_pix.allocate(proj_w, proj_h, 1);
 
       calib.init(
           proj_w, proj_h, 
@@ -104,11 +104,11 @@ class Backend
       TS_STOP("segmentation");
 
       TS_START("transform_pix");
-      calib.transform_pix(seg.pixels(), pix_out);
-      //calib.transform_tex(seg.texture(), pix_out);
+      calib.transform_pix(seg.pixels(), proj_pix);
+      //calib.transform_tex(seg.texture(), proj_pix);
       TS_STOP("transform_pix");
 
-      tex_out.loadData(pix_out);
+      tex_out.loadData(proj_pix);
 
       TS_START("transform_tags");
       calib.transform_tags(tags, proj_tags, proj_w, proj_h);
@@ -119,7 +119,7 @@ class Backend
       TS_STOP("tags_to_bloques");
 
       TS_START("blobs");
-      blobs.update(pix_out);
+      blobs.update(proj_pix);
       TS_STOP("blobs");
 
       juegos.update(proj_bloques);
@@ -141,12 +141,12 @@ class Backend
       if (resize_pix != 1.0)
       {
         ofxCv::resize(
-            pix_out, pix_resized, 
+            proj_pix, proj_pix_resized, 
             resize_pix, resize_pix);
-        pix_to_send = &pix_resized;
+        pix_to_send = &proj_pix_resized;
       }
       else
-        pix_to_send = &pix_out;
+        pix_to_send = &proj_pix;
       TS_STOP("resize_to_send");
 
       TS_START("send_msg");
@@ -268,24 +268,24 @@ class Backend
       stringstream status;
       status << "metadata= \n";
 
-      if (pix_out.isAllocated())
+      if (proj_pix.isAllocated())
       {
-        status << " pixels out:" 
+        status << " pixels proj:" 
             << " dim " 
-              << pix_out.getWidth() << "," 
-              << pix_out.getHeight()
-            << " chan " << pix_out.getNumChannels()
+              << proj_pix.getWidth() << "," 
+              << proj_pix.getHeight()
+            << " chan " << proj_pix.getNumChannels()
           << "\n";
         lines++;
       }
 
-      if (pix_resized.isAllocated())
+      if (proj_pix_resized.isAllocated())
       {
-        status << " pixels resized:" 
+        status << " pixels proj resized:" 
             << " dim " 
-              << pix_resized.getWidth() << "," 
-              << pix_resized.getHeight()
-            << " chan " << pix_resized.getNumChannels()
+              << proj_pix_resized.getWidth() << "," 
+              << proj_pix_resized.getHeight()
+            << " chan " << proj_pix_resized.getNumChannels()
           << "\n";
         lines++;
       }
@@ -336,8 +336,8 @@ class Backend
       blobs.dispose();
       cam_pix.clear();
       cam_tex.clear();
-      pix_out.clear();
-      pix_resized.clear();
+      proj_pix.clear();
+      proj_pix_resized.clear();
       seg_pix.clear();
       chili_pix.clear();
       tex_out.clear();
@@ -389,7 +389,8 @@ class Backend
     ofPixels cam_pix;
     ofPixels chili_pix;
     ofPixels seg_pix;
-    ofPixels pix_out, pix_resized;
+    ofPixels proj_pix;
+    ofPixels proj_pix_resized;
     ofTexture cam_tex;
     ofTexture tex_out;
 
