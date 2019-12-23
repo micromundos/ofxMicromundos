@@ -33,10 +33,6 @@ class Calib
 
       //init_H_gpu();
 
-      calib_tags.resize(4);
-      for (int i = 0; i < calib_tags.size(); i++)
-        calib_tags[i].load("calib/"+ofToString(i+1)+".png");
-
       vector<ofVec2f> _proj_pts = ofxMicromundos::calib_points(proj_w, proj_h);
       for (const auto& pt : _proj_pts)
         proj_pts.push_back(cv::Point2f(pt.x, pt.y)); 
@@ -87,7 +83,6 @@ class Calib
 
     void render()
     { 
-      //render_calib_tags();
       render_calib_pts();
     }; 
 
@@ -152,7 +147,6 @@ class Calib
     ofxCv::Calibration cam_calib;
 
     ofVec2f UP;
-    vector<ofImage> calib_tags;
 
     vector<cv::Point2f> tags_pts;
     vector<cv::Point2f> proj_pts;
@@ -317,16 +311,6 @@ class Calib
       ofVec2f s = a * b;
       return s.x > 0 && s.y > 0;
     }; 
-
-    void render_calib_tags()
-    {
-      float s = 80;
-      for (int i = 0; i < proj_pts.size(); i++)
-      {
-        cv::Point2f& p = proj_pts[i];
-        calib_tags[i].draw(p.x-s/2, p.y-s/2, s, s);
-      }
-    };
 
     void render_calib_pts()
     {
