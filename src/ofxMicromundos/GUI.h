@@ -24,7 +24,7 @@ class GUI
       p.add( send_binary
           .set("send_binary", true) ); 
 
-#ifdef TARGET_OSX
+#ifdef micromundos_USE_SYPHON
       p.add( send_syphon
           .set("send_syphon", false) ); 
 #else
