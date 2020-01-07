@@ -234,7 +234,7 @@ class Backend
       text("H transformed w/blobs", x, _y);
       _y += LH/2;
       render_texture(x, _y, w, _h);
-      blobs.render(x, _y, w, _h);
+      Blobs::render_debug(blobs.get(), x, _y, w, _h);
       _y += _h;
 
       if (send_pix != nullptr)

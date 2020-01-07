@@ -4,6 +4,8 @@
 #include "ofxMicromundos/net/ws/BinClient.h"
 #include "ofxMicromundos/net/ws/MsgClient.h"
 #include "ofxMicromundos/net/ws/BlobsClient.h"
+#include "ofxMicromundos/BlobsMesh.h"
+#include "ofxMicromundos/Blobs.h"
 
 class BackendClient
 {
@@ -37,6 +39,7 @@ class BackendClient
       {
         _bin.update(_msg.pix_width(), _msg.pix_height(), _msg.pix_chan());
         _blobs.update();
+        _blobs_mesh.update(_blobs.get(), ofFloatColor::white);
       }
     };
 
@@ -45,6 +48,7 @@ class BackendClient
       _msg.dispose();
       _bin.dispose();
       _blobs.dispose();
+      _blobs_mesh.dispose();
     };
 
     bool render_calib()
@@ -61,12 +65,8 @@ class BackendClient
 
     void render_blobs(float x, float y, float w, float h)
     {
-      ofPushMatrix();
-      ofTranslate(x, y);
-      ofScale(w, h); 
-      for (const auto& blob : _blobs.get())
-        blob.draw();
-      ofPopMatrix();
+      _blobs_mesh.render(x, y, w, h);
+      Blobs::render_debug(_blobs.get(), x, y, w, h);
     };
 
     void print_connections(float x, float& y)
@@ -129,6 +129,7 @@ class BackendClient
     BinClient _bin;
     MsgClient _msg;
     BlobsClient _blobs;
+    BlobsMesh _blobs_mesh;
     vector<ofVec2f> proj_pts;
     float LH;
 

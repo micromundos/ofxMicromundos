@@ -2,7 +2,6 @@
 
 #include "ofxOpenCv.h"
 #include "ofxCv.h"
-//#include "ofxDelaunay.h"
 
 class Blobs
 { 
@@ -16,7 +15,9 @@ class Blobs
     };
 
     void dispose()
-    {};
+    {
+      blobs.clear();
+    };
 
     void init()
     {
@@ -51,7 +52,6 @@ class Blobs
       int len = contours.size();
 
       blobs.clear();
-      //meshes.clear();
 
       for (unsigned int i = 0; i < len; i++)
       {
@@ -83,29 +83,9 @@ class Blobs
 
         normalize_blob(blobs[i], w, h);
       }
+    }; 
 
-      //for (int i = 0; i < blobs.size(); i++)
-      //{
-        //triangulation.reset();
-        //triangulation.addPoints(blobs[i].getVertices());
-        //ofVec2f ctr = ofxCv::toOf(contours.getCentroid(i));
-        ////ofVec2f ctr = ofxCv::toOf(contours.getAverage(i));
-        ////ofVec2f ctr = ofxCv::toOf(contours.getCenter(i));
-        //ctr.x /= w;
-        //ctr.y /= h;
-        //triangulation.addPoint(ctr);
-        //triangulation.triangulate();
-
-        //ofMesh mesh;
-        ////mesh.setFromTriangles(triangulation.triangleMesh.getUniqueFaces());
-        //mesh.append(triangulation.triangleMesh);
-        //mesh.setMode(OF_PRIMITIVE_TRIANGLES);
-        //meshes.push_back(mesh);
-      //}
-    };
-
-    //debugging
-    void render(float x, float y, float w, float h)
+    static void render_debug(vector<ofPolyline>& _blobs, float x, float y, float w, float h)
     {
       ofPushStyle();
       ofSetColor(ofColor::orange);
@@ -113,11 +93,10 @@ class Blobs
       ofPushMatrix();
       ofTranslate(x, y);
       ofScale(w, h); 
-      for (const auto& blob : blobs)
+
+      for (const auto& blob : _blobs)
         blob.draw();
-      //for (const auto& mesh : meshes)
-        //mesh.draw();
-        //mesh.drawWireframe();
+
       ofPopMatrix();
       ofPopStyle();
     }; 
@@ -129,8 +108,6 @@ class Blobs
 
   private:
 
-    //ofxDelaunay triangulation;
-    //vector<ofMesh> meshes;
     //ofPixels pix;
 
     ofxCv::ContourFinder contours; 
@@ -174,6 +151,6 @@ class Blobs
         src1[i].interpolate(dst1[i], interpolation_coef);
 
       return src1;
-    };
+    }; 
 };
 
