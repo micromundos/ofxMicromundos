@@ -2,6 +2,11 @@
 
 #include "ofMain.h"
 #include "ofxJSON.h"
+#include "ofxCv.h"
+
+#ifdef TARGET_OSX
+  #define micromundos_USE_SYPHON
+#endif
 
 namespace ofxMicromundos { 
 
@@ -23,4 +28,6 @@ namespace ofxMicromundos {
   void projector(ofxJSONElement& config);
 
   vector<ofVec2f> calib_points(float proj_w, float proj_h);
+
+  void resize(ofPixels& src, ofPixels& dst, float xscale, float yscale);
 };

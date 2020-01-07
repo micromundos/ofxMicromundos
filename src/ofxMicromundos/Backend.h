@@ -32,7 +32,8 @@ class Backend
         string calib_H_cam_proj_file, 
         string calib_cam_file, 
         float chilitags_fps,
-        float resize_pix,
+        float resize_seg,
+        float resize_send,
         int calib_tag_id,
         const Json::Value& juegos_config,
         int port_bin,
@@ -41,11 +42,13 @@ class Backend
     {
       this->proj_w = proj_w;
       this->proj_h = proj_h;
-      this->resize_pix = resize_pix;
+      this->resize_seg = resize_seg;
+      this->resize_send = resize_send;
 
       LH = 24; 
       _calib_enabled = false;
       cam_updated = false;
+      send_pix = nullptr;
 
       proj_pix.allocate(proj_w, proj_h, 1);
 
@@ -77,9 +80,10 @@ class Backend
         return false;
 
       cam_pix = cam.pixels();
-      TS_START("undistort");
-      calib.undistort(cam_pix);
-      TS_STOP("undistort");
+
+      //TS_START("undistort");
+      //calib.undistort(cam_pix);
+      //TS_STOP("undistort");
 
       TS_START("chilitags_copy");
       copy_pix(cam_pix, chili_pix);
@@ -95,20 +99,25 @@ class Backend
       if (_calib_enabled)
         calib.calibrate(tags, proj_w, proj_h);
 
-      TS_START("segmentation_resize");
-      ofxCv::resize(cam_pix, seg_pix, proj_w/cam.width(), proj_h/cam.height());
-      TS_STOP("segmentation_resize");
+      TS_START("segmentation_src");
+      segmentation_src(cam_pix, seg_pix_src);
+      TS_STOP("segmentation_src");
 
       TS_START("segmentation");
-      seg.update(seg_pix, tags); 
+      seg.update(seg_pix_src, tags); 
       TS_STOP("segmentation");
 
+      TS_START("segmentation_dst");
+      segmentation_dst(seg, seg_pix_dst); 
+      TS_STOP("segmentation_dst");
+
       TS_START("transform_pix");
-      calib.transform_pix(seg.pixels(), proj_pix);
+      calib.transform_pix(seg_pix_dst, proj_pix);
+      //calib.transform_pix(seg.pixels(), proj_pix);
       //calib.transform_tex(seg.texture(), proj_pix);
       TS_STOP("transform_pix");
 
-      tex_out.loadData(proj_pix);
+      proj_tex.loadData(proj_pix);
 
       TS_START("transform_tags");
       calib.transform_tags(tags, proj_tags, proj_w, proj_h);
@@ -136,22 +145,21 @@ class Backend
       if (!cam_updated) 
         return;
 
-      ofPixels* pix_to_send;
       TS_START("resize_to_send");
-      if (resize_pix != 1.0)
+      if (resize_send != 1.0)
       {
-        ofxCv::resize(
+        ofxMicromundos::resize(
             proj_pix, proj_pix_resized, 
-            resize_pix, resize_pix);
-        pix_to_send = &proj_pix_resized;
+            resize_send, resize_send);
+        send_pix = &proj_pix_resized;
       }
       else
-        pix_to_send = &proj_pix;
+        send_pix = &proj_pix;
       TS_STOP("resize_to_send");
 
       TS_START("send_msg");
       msg_server.send(
-          *pix_to_send,
+          *send_pix,
           proj_bloques,
           message_enabled,
           binary_enabled,
@@ -161,7 +169,7 @@ class Backend
       TS_STOP("send_msg");
 
       TS_START("send_bin");
-      bin_server.send(*pix_to_send, binary_enabled);
+      bin_server.send(*send_pix, binary_enabled);
       TS_STOP("send_bin");
 
       TS_START("send_blobs");
@@ -205,42 +213,44 @@ class Backend
 
       _y += LH/2;
       text("cam input", x, _y);
-
       _y += LH/2;
       cam.render(x, _y, w, _h);
       _y += _h;
 
       _y += LH;
-      text("undistorted w/chilis", x, _y);
-
+      text("cam undistorted w/chilis", x, _y);
       _y += LH/2;
-      if (cam_pix.isAllocated())
-        cam_tex.loadData(cam_pix);
-      if (cam_tex.isAllocated())
-        cam_tex.draw(x, _y, w, _h);
+      load_render(cam_pix, cam_tex, x, _y, w, _h);
       chilitags.render(x, _y, w, _h);
       _y += _h;
 
       _y += LH;
       text("segmented", x, _y);
-
       _y += LH/2;
       seg.render(x, _y, w, _h);
       _y += _h;
 
       _y += LH;
       text("H transformed w/blobs", x, _y);
-
       _y += LH/2;
       render_texture(x, _y, w, _h);
       blobs.render(x, _y, w, _h);
       _y += _h;
+
+      if (send_pix != nullptr)
+      {
+        _y += LH;
+        text("pix to send", x, _y);
+        _y += LH/2;
+        load_render(*send_pix, send_tex, x, _y, w, _h);
+        _y += _h;
+      }
     };
 
     void render_texture(float x, float y, float w, float h)
     {
-      if (tex_out.isAllocated())
-        tex_out.draw(x, y, w, h);
+      if (proj_tex.isAllocated())
+        proj_tex.draw(x, y, w, h);
     };
 
     void print_connections(float x, float& y)
@@ -338,19 +348,25 @@ class Backend
       cam_tex.clear();
       proj_pix.clear();
       proj_pix_resized.clear();
-      seg_pix.clear();
+      seg_pix_src.clear();
+      seg_pix_dst.clear();
       chili_pix.clear();
-      tex_out.clear();
+      proj_tex.clear();
       proj_tags.clear();
       proj_bloques.clear();
       msg_server.dispose();
       bin_server.dispose();
       blobs_server.dispose();
+      if (send_pix != nullptr)
+      {
+        (*send_pix).clear();
+        send_tex.clear();
+      }
     };
 
     ofTexture& texture()
     {
-      return tex_out;
+      return proj_tex;
     };
 
     //map<int, Bloque>& bloques()
@@ -371,7 +387,7 @@ class Backend
   private:
 
     float proj_w, proj_h;
-    float resize_pix;
+    float resize_seg, resize_send;
     float _calib_enabled;
     bool cam_updated;
     float LH;
@@ -388,15 +404,50 @@ class Backend
 
     ofPixels cam_pix;
     ofPixels chili_pix;
-    ofPixels seg_pix;
-    ofPixels proj_pix;
-    ofPixels proj_pix_resized;
-    ofTexture cam_tex;
-    ofTexture tex_out;
+    ofPixels seg_pix_src, seg_pix_dst;
+    ofPixels proj_pix, proj_pix_resized;
+    ofPixels* send_pix;
+    ofTexture send_tex, cam_tex, proj_tex;
 
     vector<ChiliTag> proj_tags;
     map<int, Bloque> proj_bloques; 
+ 
 
+    void segmentation_src(ofPixels& cam_pix, ofPixels& src)
+    {
+      float xscale, yscale;
+
+      if (resize_seg > 0)
+      {
+        xscale = resize_seg;
+        yscale = resize_seg;
+      }
+      else
+      {
+        xscale = ((float)proj_w) / cam_pix.getWidth();
+        yscale = ((float)proj_h) / cam_pix.getHeight();
+      }
+
+      ofxMicromundos::resize(cam_pix, src, xscale, yscale);
+    };
+
+    void segmentation_dst(Segmentation& seg, ofPixels& dst)
+    {
+      //if seg_pix_src was down-scaled 
+      //then up-scale it back to projection size 
+      //for transformation
+      if (resize_seg > 0)
+      {
+        ofPixels& _seg_pix = seg.pixels();
+        float xscale = ((float)proj_w) / _seg_pix.getWidth();
+        float yscale = ((float)proj_h) / _seg_pix.getHeight();
+        ofxMicromundos::resize(_seg_pix, dst, xscale, yscale);
+      }
+      else
+      {
+        dst = seg.pixels();
+      }
+    };
 
     void tags_to_bloques(vector<ChiliTag>& tags, map<int, Bloque>& bloques)
     {
@@ -489,6 +540,14 @@ class Backend
         ofDrawBitmapString(info, x, y);
         y += LH;
       }
+    };
+
+    void load_render(ofPixels& pix, ofTexture& tex, float x, float y, float w, float h)
+    {
+      if (pix.isAllocated())
+        tex.loadData(pix);
+      if (tex.isAllocated())
+        tex.draw(x, y, w, h);
     };
 
     void text(string text, int x, int y)

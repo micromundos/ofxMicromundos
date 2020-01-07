@@ -2,6 +2,7 @@
 
 #include "ofMain.h"
 #include "ofxGui.h"
+#include "ofxMicromundos/utils.h"
 
 class GUI
 {

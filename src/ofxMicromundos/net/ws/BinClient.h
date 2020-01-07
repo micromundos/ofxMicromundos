@@ -36,7 +36,7 @@ class BinClient
 
     bool update(int pix_w, int pix_h, int pix_chan)
     {
-      if ( !received || !locked )
+      if ( !received )
         return false;
       deserialize(data, pix_w, pix_h, pix_chan);
       received = false;
@@ -90,7 +90,6 @@ class BinClient
 
       data.clear();
       data.set(args.data.getData(), args.data.size());
-      //memcpy(pix_data, args.data.getData(), args.data.size());
 
       locked = true;
       received = true; 
@@ -117,7 +116,6 @@ class BinClient
     bool received, locked;
 
     ofBuffer data;
-    //char* pix_data;
 
     ofPixels pix;
     ofTexture tex;

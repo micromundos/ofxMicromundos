@@ -82,4 +82,13 @@ namespace ofxMicromundos {
 
     return pts;
   };
+
+  void resize(ofPixels& src, ofPixels& dst, float xscale, float yscale)
+  {
+    ofxCv::resize(src, dst, xscale, yscale);
+    //int w = src.getWidth() * xscale;
+    //int h = src.getHeight() * yscale;
+    //dst.allocate(w, h, src.getPixelFormat());
+    //src.resizeTo(dst);
+  };
 };
