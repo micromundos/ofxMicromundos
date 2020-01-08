@@ -17,7 +17,6 @@ class BlobsMesh
       meshes.clear();
     };
 
-
     void update(vector<ofPolyline>& blobs, ofFloatColor color)
     {
       meshes.clear();
