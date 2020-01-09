@@ -66,7 +66,7 @@ class BackendClient
     void render_blobs(float x, float y, float w, float h)
     {
       _blobs_mesh.render(x, y, w, h);
-      Blobs::render_debug(_blobs.get(), x, y, w, h);
+      //Blobs::render_debug(_blobs.get(), x, y, w, h);
     };
 
     void print_connections(float x, float& y)

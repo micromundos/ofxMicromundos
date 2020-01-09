@@ -22,9 +22,8 @@ class Blobs
     void init()
     {
       resampled_len = 100.0f;
-      interpolation_coef = 0.3f;
       blobs_threshold = 15;
-      interpolate_ = true;
+      interpolate_ = false;
 
       contours.setMinAreaRadius( 10 );
       contours.setMaxAreaRadius( 1000 );
@@ -83,7 +82,7 @@ class Blobs
 
         normalize_blob(blobs[i], w, h);
       }
-    }; 
+    };
 
     static void render_debug(vector<ofPolyline>& _blobs, float x, float y, float w, float h)
     {
@@ -115,7 +114,6 @@ class Blobs
     vector<ofPolyline> blobs;
 
     float resampled_len;
-    float interpolation_coef;
     float blobs_threshold;
     bool interpolate_;
 
@@ -148,7 +146,11 @@ class Blobs
       src1.close();
 
       for (int i = 0; i < len; i++)
-        src1[i].interpolate(dst1[i], interpolation_coef);
+      {
+        //float d = src1[i].distance(dst1[i]);
+        //float c = ofMap(d, 0, 20, 0.5, 0, true);
+        src1[i].interpolate(dst1[i], 0.1);
+      }
 
       return src1;
     }; 
