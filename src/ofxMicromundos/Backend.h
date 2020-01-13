@@ -86,7 +86,7 @@ class Backend
       //TS_STOP("undistort");
 
       TS_START("chilitags_copy");
-      copy_pix(cam_pix, chili_pix);
+      ofxMicromundos::copy_pix(cam_pix, chili_pix);
       TS_STOP("chilitags_copy");
 
       TS_START("chilitags");
@@ -553,11 +553,6 @@ class Backend
     void text(string text, int x, int y)
     {
       ofDrawBitmapStringHighlight(text, x, y, ofColor::yellow, ofColor::black);
-    };
-
-    void copy_pix(ofPixels& src, ofPixels& dst)
-    {
-      dst.setFromPixels(src.getData(), src.getWidth(), src.getHeight(), src.getNumChannels());
     };
 };
 

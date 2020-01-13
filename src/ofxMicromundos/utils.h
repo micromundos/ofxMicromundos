@@ -30,4 +30,5 @@ namespace ofxMicromundos {
   vector<ofVec2f> calib_points(float proj_w, float proj_h);
 
   void resize(ofPixels& src, ofPixels& dst, float xscale, float yscale);
+  void copy_pix(ofPixels& src, ofPixels& dst);
 };
