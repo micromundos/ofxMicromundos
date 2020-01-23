@@ -247,6 +247,12 @@ class Backend
       }
     };
 
+    void render_cam(float x, float y, float w, float h)
+    {
+      load_render(cam_pix, cam_tex, x, y, w, h);
+      chilitags.render(x, y, w, h);
+    };
+
     void render_texture(float x, float y, float w, float h)
     {
       if (proj_tex.isAllocated())

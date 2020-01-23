@@ -23,6 +23,8 @@ class BlobsMesh
       for (int i = 0; i < blobs.size(); i++)
       { 
         ofPolyline& blob = blobs[i];
+        if (blob.size() < 3)
+          continue;
         ofxTriangleMesh mesh;
         blob_to_mesh(blob, mesh);
         meshes.push_back(mesh); 
